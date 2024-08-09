@@ -52,10 +52,6 @@ body, html {
     margin: 10px;
   }
   
-  button:hover {
-    background-color: #39D353;
-  }
-  
   .modal {
     position: fixed;
     top: 0;
