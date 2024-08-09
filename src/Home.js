@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './Home.css';
 import Papa from 'papaparse';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 function Home() {
   const [ledgerFile, setLedgerFile] = useState(null);
@@ -9,6 +11,14 @@ function Home() {
   const [logFileName, setLogFileName] = useState('');
   const [playersData, setPlayersData] = useState(null);
   const [isUploaded, setIsUploaded] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState({});
+
+  const togglePlayerSelection = (playerName) => {
+    setSelectedPlayers(prev => ({
+      ...prev,
+      [playerName]: !prev[playerName]
+    }));
+  };
 
   const handleLedgerFileChange = (event) => {
     const file = event.target.files[0];
@@ -18,6 +28,11 @@ function Home() {
       ledgerParser(file);
     }
   };
+
+  function truncateFilename(filename) {
+    if (filename.length <= 35) return filename;
+    return `${filename.substr(0, 15)}...${filename.substr(filename.length - 15)}`;
+  }
 
   const handleLogFileChange = (event) => {
     const file = event.target.files[0];
@@ -91,8 +106,10 @@ function Home() {
                 id="ledgerFile"
               />
               <label className="label" htmlFor="ledgerFile">
-                <div className="plusButton">+</div>
-                <span>{ledgerFileName || 'Upload Ledger Here'}</span>
+                <div className="plusButton">
+                  <FontAwesomeIcon icon={faPlus} />
+                </div>
+                <span>{ledgerFileName ? truncateFilename(ledgerFileName) : 'Upload Ledger Here'}</span>
               </label>
             </div>
             <div className="uploadContainer">
@@ -104,8 +121,10 @@ function Home() {
                 id="logFile"
               />
               <label className="label" htmlFor="logFile">
-                <div className="plusButton">+</div>
-                <span>{logFileName || 'Upload Log Here (Optional)'}</span>
+                <div className="plusButton">
+                  <FontAwesomeIcon icon={faPlus} />
+                </div>
+                <span>{logFileName ? truncateFilename(logFileName) : 'Upload Log Here (Optional)'}</span>
               </label>
             </div>
             <button className="uploadButton" onClick={handleUpload}>
@@ -116,18 +135,25 @@ function Home() {
           <>
             <h2 className="title">Player Results</h2>
             <div className="playerResults">
-              {playersData && Object.entries(playersData).map(([playerName, data]) => (
-                <div key={playerName} className="playerResult">
-                  <span className="playerName">{playerName}</span>
-                  <span className="playerNet">{data.net}</span>
-                </div>
+              {Object.entries(playersData).map(([playerName, data]) => (
+                <button
+                  key={playerName}
+                  className={`playerButton ${selectedPlayers[playerName] ? 'active' : ''}`}
+                  onClick={() => togglePlayerSelection(playerName)}
+                >
+                  {playerName} ({data.net >= 0 ? `+${data.net}` : data.net})
+                </button>
               ))}
             </div>
+            <button className="uploadButton" onClick={() => setIsUploaded(false)}>
+              Add Another Session
+            </button>
           </>
         )}
       </div>
     </div>
   );
 }
+  
 
 export default Home;
