@@ -1,0 +1,25 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
+import './Navbar.css';
+
+function Navbar() {
+  return (
+    <div className="navbar">
+      <div className="logo">
+        <Link to="/">Pokerin.site</Link>
+      </div>
+      <div className="nav-links">
+        <Link to="/" className="nav-item">Add Session</Link>
+        <Link to="/game-analysis" className="nav-item">Game Analysis</Link>
+        <Link to="/bankroll" className="nav-item">Bankroll</Link>
+      </div>
+      <div className="user">
+        <FontAwesomeIcon icon={faUser} className="user-icon" />
+      </div>
+    </div>
+  );
+}
+
+export default Navbar;
