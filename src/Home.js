@@ -12,12 +12,21 @@ function Home() {
   const [playersData, setPlayersData] = useState(null);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState({});
+  const [includeCents, setIncludeCents] = useState(false);
 
   const togglePlayerSelection = (playerName) => {
     setSelectedPlayers(prev => ({
       ...prev,
       [playerName]: !prev[playerName]
     }));
+  };
+
+  const truncateName = (name) => {
+    const maxLength = 12;  // Set max length for the display name
+    if (name.length > maxLength) {
+      return `${name.substring(0, maxLength)}...`; // Truncate and add ellipsis
+    }
+    return name;
   };
 
   const handleLedgerFileChange = (event) => {
@@ -133,20 +142,37 @@ function Home() {
           </>
         ) : (
           <>
-            <h2 className="title">Player Results</h2>
+            <h2 className="title">Select Your Accounts</h2>
             <div className="playerResults">
-              {Object.entries(playersData).map(([playerName, data]) => (
-                <button
-                  key={playerName}
-                  className={`playerButton ${selectedPlayers[playerName] ? 'active' : ''}`}
-                  onClick={() => togglePlayerSelection(playerName)}
-                >
-                  {playerName} ({data.net >= 0 ? `+${data.net}` : data.net})
-                </button>
-              ))}
+              {Object.entries(playersData).map(([playerName, data]) => {
+                const displayNet = includeCents ? (data.net / 100).toFixed(2) : data.net;
+                const netClass = data.net >= 0 ? 'netPositive' : 'netNegative';
+
+                return (
+                  <button
+                    key={playerName}
+                    className={`playerButton ${selectedPlayers[playerName] ? 'active' : ''}`}
+                    onClick={() => togglePlayerSelection(playerName)}
+                  >
+                    {truncateName(playerName)}
+                    <span className={netClass}> ({displayNet >= 0 ? `+${displayNet}` : displayNet}) </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="toggleContainer">
+              <label className="toggleLabel">
+                Include cent values
+                <input
+                  type="checkbox"
+                  checked={includeCents}
+                  onChange={() => setIncludeCents(!includeCents)}
+                  className="toggleCheckbox"
+                />
+              </label>
             </div>
             <button className="uploadButton" onClick={() => setIsUploaded(false)}>
-              Add Another Session
+              Confirm
             </button>
           </>
         )}

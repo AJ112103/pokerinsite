@@ -51,20 +51,6 @@
     color: #28c142; /* Green color for pokerin.site */
 }
 
-/* Google button */
-.google-btn {
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .google-btn {
     background-color: #ffffff00;
     color: black;

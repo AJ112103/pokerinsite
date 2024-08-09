@@ -71,41 +71,81 @@
   font-size: 16px;
 }
 
-.playerResult {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border-radius: 5px;
-  margin-bottom: 10px;
+.playerResults {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Two buttons per row */
+  grid-gap: 5px; /* Space between buttons */
+  overflow-y: auto; /* Ensures scrollability within the playerResults */
 }
 
 .playerButton {
-  background-color: #ccc; /* Light gray */
-  color: black;
+  background-color: #dadada; /* Light gray */
   border: none;
   border-radius: 5px;
-  padding: 5px 10px;
+  padding: 10px;
   cursor: pointer;
+  height: 35px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap; /* Prevents text wrapping */
+  color: black; /* Ensures text is readable */
 }
 
 .playerButton.active {
-  background-color: #333; /* Dark gray */
-  color: white;
+  background-color: #a9a9a9; /* Dark gray */
 }
 
-.playerName {
-  font-weight: bold;
+.netPositive {
+  color: green; /* Green for positive values */
+}
+
+.netNegative {
+  color: red; /* Red for negative values */
+}
+
+.toggleContainer {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.playerNet {
-  margin-left: 10px;
-  color: green;
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  font-size: 16px; /* Adjust label font size */
+  color: #666; /* Set the text color */
+  margin-right: 10px; /* Space between label and switch */
 }
 
-.playerNet.negative {
-  color: red;
+.toggleCheckbox {
+  position: relative;
+  width: 40px; /* Smaller width */
+  height: 24px; /* Smaller height */
+  -webkit-appearance: none;
+  background-color: #ccc;
+  outline: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
+
+.toggleCheckbox:checked {
+  background-color: #3F9B0A;
+}
+
+.toggleCheckbox:before {
+  position: absolute;
+  content: "";
+  width: 20px; /* Smaller knob */
+  height: 20px; /* Smaller knob */
+  top: 2px; /* Adjust to vertically center */
+  left: 2px; /* Adjust to fit within the switch */
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggleCheckbox:checked:before {
+  transform: translateX(16px); /* Adjust to the new width */
+}
+
