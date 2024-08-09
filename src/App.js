@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './Navbar';
 import Home from './Home';
+import About from './About';
 import GameAnalysis from './GameAnalysis';
 import Bankroll from './Bankroll';
 
@@ -11,6 +12,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/game-analysis" element={<GameAnalysis />} />
         <Route path="/bankroll" element={<Bankroll />} />
       </Routes>
