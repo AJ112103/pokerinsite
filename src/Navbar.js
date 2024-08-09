@@ -8,10 +8,10 @@ function Navbar() {
   return (
     <div className="navbar">
       <div className="logo">
-        <Link to="/">Pokerin.site</Link>
+        <Link to="/add-session">Pokerin.site</Link>
       </div>
       <div className="nav-links">
-        <Link to="/" className="nav-item">Add Session</Link>
+        <Link to="/add-session" className="nav-item">Add Session</Link>
         <Link to="/about" className="nav-item">About</Link>
         <Link to="/game-analysis" className="nav-item">Game Analysis</Link>
         <Link to="/bankroll" className="nav-item">Bankroll</Link>

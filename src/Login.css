@@ -1,0 +1,88 @@
+/* Full-screen background image */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('pexels-pixabay-269630.jpg'); /* Replace with your image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    mask-image: radial-gradient(circle 300px at var(--mouse-x) var(--mouse-y), transparent 20%, black 100%);
+    z-index: 1;
+}
+
+
+/* Centered card */
+.login-card {
+    background-color: rgba(255, 255, 255, 0.8); /* Slight transparency */
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    z-index: 2;
+}
+
+.login-card p {
+    margin-top: -15px;
+}
+
+/* Welcome box */
+.welcome-box {
+    margin-bottom: 20px;
+}
+
+/* Highlighted text for site name */
+.highlight {
+    color: #39D353; /* Green color for pokerin.site */
+}
+
+/* Google button */
+.google-btn {
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.google-btn {
+    background-color: #ffffff00;
+    color: black;
+    border: 1px solid rgb(0, 0, 0);
+    padding: 10px 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+
+.google-icon {
+    margin-right: 10px;
+    font-size: 16px; /* Adjust the icon size if needed */
+}
+
