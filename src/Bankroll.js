@@ -10,8 +10,10 @@ function Bankroll() {
     date: '',
     score: '',
   });
-
-  const [selectedDate, setSelectedDate] = useState(''); 
+  const [sessionType, setSessionType] = useState('online'); // State for session type
+  const [sessionNumber, setSessionNumber] = useState(''); // State for session number
+  const [customSession, setCustomSession] = useState(''); // State for custom session
+  const [selectedDate, setSelectedDate] = useState('');
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'ascending',
@@ -45,8 +47,17 @@ function Bankroll() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+    
+    let sessionName = '';
+    if (sessionType === 'custom') {
+      sessionName = customSession;
+    } else {
+      sessionName = `${sessionType === 'online' ? 'Online' : 'Offline'} Session #${sessionNumber}`;
+    }
+    
     const sessionData = {
       ...newSession,
+      session: sessionName,
       date: formatDate(selectedDate), 
       score: parseFloat(newSession.score),
     };
@@ -67,6 +78,9 @@ function Bankroll() {
     setIsModalOpen(false);
     setNewSession({ session: '', date: '', score: '' });
     setSelectedDate('');
+    setSessionType('online');
+    setSessionNumber('');
+    setCustomSession('');
   };
 
   const handleInputChange = (e) => {
@@ -77,6 +91,12 @@ function Bankroll() {
     } else {
       setNewSession({ ...newSession, [name]: value });
     }
+  };
+
+  const handleSessionTypeChange = (e) => {
+    setSessionType(e.target.value);
+    setSessionNumber('');
+    setCustomSession('');
   };
 
   const sortSessions = (key) => {
@@ -101,8 +121,8 @@ function Bankroll() {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return '⇅';
-    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+    if (sortConfig.key !== key) return "";
+    return sortConfig.direction === 'ascending' ? '▼' : '▲';
   };
 
   return (
@@ -142,18 +162,41 @@ function Bankroll() {
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
+            <span className="close-button" onClick={() => setIsModalOpen(false)}>&times;</span>
             <h3>Add New Session</h3>
             <form onSubmit={handleFormSubmit}>
               <label>
-                Session:
-                <input
-                  type="text"
-                  name="session"
-                  value={newSession.session}
-                  onChange={handleInputChange}
-                  required
-                />
+                Session Type:
+                <select value={sessionType} onChange={handleSessionTypeChange} required>
+                  <option value="online">Online Session #</option>
+                  <option value="offline">Offline Session #</option>
+                  <option value="custom">Custom Entry</option>
+                </select>
               </label>
+              {sessionType !== 'custom' && (
+                <label>
+                  Session Number:
+                  <input
+                    type="number"
+                    name="sessionNumber"
+                    value={sessionNumber}
+                    onChange={(e) => setSessionNumber(e.target.value)}
+                    required
+                  />
+                </label>
+              )}
+              {sessionType === 'custom' && (
+                <label>
+                  Custom Session:
+                  <input
+                    type="text"
+                    name="customSession"
+                    value={customSession}
+                    onChange={(e) => setCustomSession(e.target.value)}
+                    required
+                  />
+                </label>
+              )}
               <label>
                 Date:
                 <input
@@ -175,9 +218,6 @@ function Bankroll() {
                 />
               </label>
               <button type="submit">Add Session</button>
-              <button type="button" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </button>
             </form>
           </div>
         </div>
@@ -187,4 +227,3 @@ function Bankroll() {
 }
 
 export default Bankroll;
-
