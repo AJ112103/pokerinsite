@@ -1,0 +1,61 @@
+@import './GameAnalysis.css';
+
+/* Hand Insights Specific Styles */
+.hand-insights-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.hand-insights-container h2 {
+  color: #333;
+}
+
+.hand-insights-container h3 {
+  margin-top: 20px;
+  color: #333;
+}
+
+.hand-insights-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+}
+
+.hand-insights-container th, .hand-insights-container td {
+  padding: 10px;
+  text-align: center;
+  border: none;
+}
+
+.hand-insights-container th {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.hand-insights-container tr:last-child td {
+  border-bottom: none;
+}
+
+.hand-insights-container tr:hover {
+  background-color: #f0f0f0;
+}
+
+.hand-insights-container .positive {
+  color: green;
+}
+
+.hand-insights-container .negative {
+  color: red;
+}
+
+.table-hand{
+  border-radius: 10px;
+}

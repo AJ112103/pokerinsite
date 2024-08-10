@@ -9,6 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import SubscriptionPopup from './SubscriptionPopup';
 import './Login.css';
 
+
 function Login() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const navigate = useNavigate();
@@ -74,6 +75,10 @@ function Login() {
             </div>
         </div>
     );
+    
+    
 }
 
 export default Login;
+
+
