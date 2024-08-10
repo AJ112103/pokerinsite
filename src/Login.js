@@ -8,6 +8,7 @@ import { doc, setDoc, getFirestore, getDoc } from "firebase/firestore";
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import './Login.css';
 
+
 function Login() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const navigate = useNavigate();
@@ -70,6 +71,10 @@ function Login() {
             </div>
         </div>
     );
+    
+    
 }
 
 export default Login;
+
+

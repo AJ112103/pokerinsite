@@ -7,6 +7,8 @@ import Login from './Login';
 import GameAnalysis from './GameAnalysis';
 import Bankroll from './Bankroll';
 import PrivateRoute from './PrivateRoute';
+import HandInsights from './HandInsights';
+import PlayerInsights from './PlayerInsights';
 
 function App() {
   const location = useLocation();
@@ -49,7 +51,19 @@ function App() {
               <Bankroll />
             </PrivateRoute>
           } 
-        />
+        /> 
+        <Route 
+        path="/hand-insights" 
+        element={
+            <HandInsights />
+        } 
+      />
+        <Route 
+        path="/player-insights" 
+        element={
+            <PlayerInsights />
+        } 
+      />
       </Routes>
     </>
   );
@@ -64,3 +78,4 @@ function AppWrapper() {
 }
 
 export default AppWrapper;
+

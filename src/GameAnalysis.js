@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './GameAnalysis.css';
+import { useNavigate } from 'react-router-dom';
 
 const GameAnalysis = () => {
   const [sessions, setSessions] = useState([]);
@@ -57,6 +58,16 @@ const GameAnalysis = () => {
     setSelectedSession(null);
   };
 
+  const navigate = useNavigate();
+
+  const handlePlayerInsightsClick = () => {
+    navigate('/player-insights');
+  };
+
+  const handleHandInsightsClick = () => {
+    navigate('/hand-insights');
+  };
+
   return (
     <div className="game-analysis-container">
       <h2>Sessions With Generated Insights</h2>
@@ -72,7 +83,7 @@ const GameAnalysis = () => {
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id} onClick={() => handleSessionClick(session)}>
-                <td>{session.name}</td>
+                <td class="underline">{session.name}</td>
                 <td>{session.date}</td>
                 <td style={{ color: session.netScore >= 0 ? 'green' : 'red' }}>
                   {session.netScore >= 0 ? '+' : ''}{session.netScore}
@@ -119,8 +130,8 @@ const GameAnalysis = () => {
               </div>
             </div>
             <div className="button-group">
-              <button>Player Insights</button>
-              <button>Hand Insights</button>
+            <button onClick={handlePlayerInsightsClick}>Player Insights</button>
+            <button onClick={handleHandInsightsClick}>Hand Insights</button>
             </div>
           </div>
         </div>
