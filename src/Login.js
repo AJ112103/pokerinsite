@@ -30,6 +30,8 @@ function Login() {
         signInWithPopup(auth, provider)
             .then(async (result) => {
                 const user = result.user;
+                const token = await user.getIdToken(); // Retrieve the ID token
+                localStorage.setItem('token', token);
                 const db = getFirestore();
                 const userRef = doc(db, 'users', user.uid);
 
@@ -47,7 +49,7 @@ function Login() {
                         email: user.email,
                         createdAt: new Date(),
                         uploads: 3,
-                        subscriptionTier: "free",
+                        subscriptionTier: "Free",
                         stripeCustomerId: stripeCustomerId // Store the Stripe customer ID
                     });
                 }
@@ -69,9 +71,7 @@ function Login() {
                         <FontAwesomeIcon icon={faGoogle} style={{ marginRight: '10px', fontSize: '16px' }} /> Sign in with Google
                     </button>
                 </div>
-                {/* <div>
-                    <SubscriptionPopup />
-                </div> */}
+
             </div>
         </div>
     );

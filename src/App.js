@@ -9,6 +9,8 @@ import Bankroll from './Bankroll';
 import PrivateRoute from './PrivateRoute';
 import HandInsights from './HandInsights';
 import PlayerInsights from './PlayerInsights';
+import PaymentSuccess from './PaymentSuccess';
+import PaymentFailure from './PaymentFailure';
 
 function App() {
   const location = useLocation();
@@ -53,17 +55,29 @@ function App() {
           } 
         /> 
         <Route 
-        path="/hand-insights" 
-        element={
-            <HandInsights />
-        } 
-      />
+          path="/hand-insights" 
+          element={
+              <HandInsights />
+          } 
+        />
         <Route 
-        path="/player-insights" 
-        element={
-            <PlayerInsights />
-        } 
-      />
+          path="/player-insights" 
+          element={
+              <PlayerInsights />
+          } 
+        />
+        <Route 
+          path="/payment-success" 
+          element={
+              <PaymentSuccess />
+          } 
+        />
+      <Route 
+          path="/payment-failure" 
+          element={
+              <PaymentFailure />
+          } 
+        />
       </Routes>
     </>
   );
