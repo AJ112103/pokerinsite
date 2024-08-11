@@ -11,6 +11,7 @@ import HandInsights from './HandInsights';
 import PlayerInsights from './PlayerInsights';
 import PaymentSuccess from './PaymentSuccess';
 import PaymentFailure from './PaymentFailure';
+import RouletteLoader from './RouletteLoader';
 
 function App() {
   const location = useLocation();

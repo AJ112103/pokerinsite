@@ -1,0 +1,11 @@
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .spinner-img {
+    width: 100px;  /* Adjust size as needed */
+    height: 100px; /* Adjust size as needed */
+    animation: spin 2s linear infinite;
+  }
+  

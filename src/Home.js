@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import './Home.css';
 import Papa from 'papaparse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import RouletteLoader from './RouletteLoader';
+import SubscriptionPopup from './SubscriptionPopup';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 function Home() {
@@ -11,8 +15,12 @@ function Home() {
   const [logFileName, setLogFileName] = useState('');
   const [playersData, setPlayersData] = useState(null);
   const [isUploaded, setIsUploaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState({});
+  const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
+  const [uploadsLeft, setUploadsLeft] = useState(0);
   const [includeCents, setIncludeCents] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const togglePlayerSelection = (playerName) => {
     setSelectedPlayers(prev => ({
@@ -33,9 +41,6 @@ function Home() {
     const file = event.target.files[0];
     setLedgerFile(file);
     setLedgerFileName(file.name);
-    if (file) {
-      ledgerParser(file);
-    }
   };
 
   function truncateFilename(filename) {
@@ -47,61 +52,157 @@ function Home() {
     const file = event.target.files[0];
     setLogFile(file);
     setLogFileName(file.name);
-    if (file) {
-      logParser(file);
-    }
   };
 
+  
   const handleUpload = () => {
     if (ledgerFile) {
-      setIsUploaded(true);
-    } else {
-      alert('Please upload the ledger file.');
-    }
-  };
+        setIsLoading(true);
+        // Adjust the callback to receive parsedPlayersData
+        ledgerParser(ledgerFile, (parsedPlayersData) => {
+            console.log("Parsed Players Data:", parsedPlayersData);
 
-  const ledgerParser = (file) => {
-    const reader = new FileReader();
-    
-    reader.onload = function(event) {
-      const csvData = event.target.result;
-      Papa.parse(csvData, {
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-          const parsedPlayersData = {};
+            if (!parsedPlayersData || Object.keys(parsedPlayersData).length === 0) {
+                resetData();
+                console.log("Invalid format for ledger file");
+                alert("Invalid format for ledger file");
+            } else {
+                const functions = getFunctions();
+                const checkUploadPermission = httpsCallable(functions, 'checkUploadPermission');
 
-          results.data.forEach(row => {
-            const playerNickname = row.player_nickname;
-
-            if (playerNickname) {
-              parsedPlayersData[playerNickname] = {
-                player_id: row.player_id,
-                buy_in: row.buy_in,
-                buy_out: row.buy_out,
-                stack: row.stack,
-                net: row.net
-              };
+                checkUploadPermission().then((result) => {
+                    if (result.data.success) {
+                        if (result.data.free) {
+                            setUploadsLeft(result.data.uploadsLeft - 1);
+                            setShowSubscriptionPopup(true);
+                        }
+                        setIsLoading(false);
+                        setIsUploaded(true);
+                    } else {
+                        setShowSubscriptionPopup(true);
+                        setIsLoading(false);
+                        setLedgerFile(null);
+                        setLogFile(null);
+                        setLedgerFileName('');
+                        setLogFileName('');
+                        setPlayersData(null);
+                    }
+                }).catch((error) => {
+                    console.error('Error checking upload permission:', error);
+                    setIsLoading(false);
+                    alert('Error processing upload. Please try again.');
+                });
             }
-          });
+        });
+    } else {
+        alert('Please upload the ledger file.');
+    }
+};
+  
+  const ledgerParser = (file, onParseComplete) => {
+    const reader = new FileReader();
 
-          setPlayersData(parsedPlayersData);
-        },
-        error: function(error) {
-          console.error('Error parsing CSV:', error);
-        }
-      });
+    reader.onload = function(event) {
+        const csvData = event.target.result;
+        Papa.parse(csvData, {
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const parsedPlayersData = {};
+
+                results.data.forEach(row => {
+                    const playerNickname = row.player_nickname;
+                    if (playerNickname) {
+                        parsedPlayersData[playerNickname] = {
+                            player_id: row.player_id,
+                            buy_in: row.buy_in,
+                            buy_out: row.buy_out,
+                            stack: row.stack,
+                            net: row.net
+                        };
+                    }
+                });
+                console.log("Parsed Data:", parsedPlayersData);
+                setPlayersData(parsedPlayersData);
+                if (onParseComplete) {
+                    onParseComplete(parsedPlayersData); // Pass the parsed data to the callback
+                }
+            },
+            error: function(error) {
+                console.error('Error parsing CSV:', error);
+            }
+        });
     };
 
     reader.readAsText(file);
-  };
+};
 
-  function logParser() {
-    // Intentionally does nothing
+  function resetData() {
+    setLedgerFile(null);
+    setLogFile(null);
+    setLedgerFileName('');
+    setLogFileName('');
+    setPlayersData(null);
+    setIsUploaded(false);
+    setIsLoading(false);
+    setSelectedPlayers({});
+    setShowSubscriptionPopup(false);
+    setIncludeCents(false);
+
   }
+ 
+  function logParser() {
+    setIsLoading(true);
+    if (logFile) {
+        const storage = getStorage();
+        const storageRef = ref(storage, 'uploads/' + logFile.name);
+
+        uploadBytes(storageRef, logFile).then((snapshot) => {
+            console.log('Uploaded a blob or file!', snapshot);
+
+            getDownloadURL(snapshot.ref).then((downloadURL) => {
+                console.log('File available at', downloadURL);
+
+                // Optionally, send this URL to your Lambda function
+                // sendToLambda(downloadURL);
+            });
+        }).catch((error) => {
+            console.error('Upload failed', error);
+        });
+    } else {
+        setIsUploaded(false);
+    }
+}
+    const closePopup = () => {
+      setShowSubscriptionPopup(false);
+    };
+
+
+  if (isLoading)
+    {
+      return (
+        <div className="container">
+          <div className="loading-card">
+            <RouletteLoader />
+          </div>
+        </div>
+      )
+    }
+
+    if (isSuccess)
+      {
+        return (
+          <div className="container">
+            <div className="loading-card">
+              <h3>Success!</h3>
+            </div>
+          </div>
+        )
+      }
 
   return (
     <div className="container">
+      {showSubscriptionPopup && <SubscriptionPopup uploadsLeft={uploadsLeft} onClose={closePopup} />}
       <div className="card">
         {!isUploaded ? (
           <>
@@ -171,7 +272,7 @@ function Home() {
                 />
               </label>
             </div>
-            <button className="uploadButton" onClick={() => setIsUploaded(false)}>
+            <button className="uploadButton" onClick={() => logParser()}>
               Confirm
             </button>
           </>
