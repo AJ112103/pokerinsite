@@ -6,7 +6,7 @@ import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getFirestore, getDoc } from "firebase/firestore"; 
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import SubscriptionPopup from './SubscriptionPopup';
+// import SubscriptionPopup from './SubscriptionPopup';
 import './Login.css';
 
 
@@ -52,7 +52,7 @@ function Login() {
                     });
                 }
 
-                // navigate('/add-session'); // Navigate to home after successful login
+                navigate('/add-session'); // Navigate to home after successful login
             })
             .catch((error) => {
                 console.error('Error during sign-in:', error);
@@ -69,9 +69,9 @@ function Login() {
                         <FontAwesomeIcon icon={faGoogle} style={{ marginRight: '10px', fontSize: '16px' }} /> Sign in with Google
                     </button>
                 </div>
-                <div>
+                {/* <div>
                     <SubscriptionPopup />
-                </div>
+                </div> */}
             </div>
         </div>
     );
