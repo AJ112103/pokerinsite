@@ -1,31 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import './Bankroll.css';
 import { parse } from 'date-fns';
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFunctions, httpsCallable } from "firebase/functions"; 
+
 
 function Bankroll() {
   const [sessions, setSessions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
   const [newSession, setNewSession] = useState({
     session: '',
     date: '',
     score: '',
   });
-  const [sessionType, setSessionType] = useState('online'); // State for session type
-  const [sessionNumber, setSessionNumber] = useState(''); // State for session number
-  const [customSession, setCustomSession] = useState(''); // State for custom session
+  const [sessionType, setSessionType] = useState('online');
+  const [sessionNumber, setSessionNumber] = useState('');
+  const [customSession, setCustomSession] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'ascending',
   });
+  const [netScore, setNetScore] = useState(0);
+  const [initialBankroll, setInitialBankroll] = useState('');
 
   useEffect(() => {
-    const sampleData = [
-      { session: 'Online Session #1', date: 'July 24th, 2024', score: -200 },
-      { session: 'Online Session #2', date: 'August 3rd, 2024', score: 573 },
-    ];
-    setSessions(sampleData);
+    fetchBankrollData();
   }, []);
+
+  const fetchBankrollData = async () => {
+    try {
+      const functions = getFunctions();
+      const getBankrollData = httpsCallable(functions, 'getBankrollData');
+      const result = await getBankrollData();
+      setNetScore(result.data.netScore);
+      setSessions(result.data.entries.map(entry => ({
+        id: entry.id,
+        session: entry.name,
+        date: entry.date,
+        score: entry.score
+      })));
+    } catch (error) {
+      console.error('Error fetching bankroll data:', error);
+    }
+  };
 
   const formatDate = (date) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -47,14 +67,15 @@ function Bankroll() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    
+
+
     let sessionName = '';
     if (sessionType === 'custom') {
       sessionName = customSession;
     } else {
       sessionName = `${sessionType === 'online' ? 'Online' : 'Offline'} Session #${sessionNumber}`;
     }
-    
+
     const sessionData = {
       ...newSession,
       session: sessionName,
@@ -64,16 +85,22 @@ function Bankroll() {
 
     setSessions([...sessions, sessionData]);
 
-    fetch('/api/sessions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(sessionData),
-    })
-      .then((response) => response.json())
-      .then((data) => console.log('Data sent to the backend:', data))
-      .catch((error) => console.error('Error sending data to the backend:', error));
+    async function saveBankroll(sessionData) {
+      const functions = getFunctions();
+      const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
+      addBankrollEntryAndUpdateScore({
+        sessionName: sessionData.session,
+        date: sessionData.date,
+        score: sessionData.score
+      }).then((result) => {
+        console.log('Updated Net Score:', result.data.netScore);
+        setNetScore(result.data.netScore);
+      }).catch((error) => {
+        console.error('Error updating bankroll:', error);
+      });
+    }
+
+    saveBankroll(sessionData);
 
     setIsModalOpen(false);
     setNewSession({ session: '', date: '', score: '' });
@@ -99,12 +126,19 @@ function Bankroll() {
     setCustomSession('');
   };
 
+  const handleInitializeBankroll = (e) => {
+    e.preventDefault();
+    setNetScore(parseFloat(initialBankroll));
+    setInitialBankroll('');
+    setActiveModal(null);
+  };
+
   const sortSessions = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
-  
+
     const sortedSessions = [...sessions].sort((a, b) => {
       if (key === 'date') {
         const dateA = parse(a.date, 'MMMM do, yyyy', new Date());
@@ -119,15 +153,15 @@ function Bankroll() {
     setSortConfig({ key, direction });
     setSessions(sortedSessions);
   };
-
+  
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return "";
     return sortConfig.direction === 'ascending' ? '▼' : '▲';
   };
-
+  
   return (
     <div className="bankroll-container">
-      <h2>Your Total Bankroll: $4927</h2>
+      <h2>Your Total Bankroll: ${netScore}</h2>
       <div className="table-wrapper">
         <table>
           <thead>
@@ -142,8 +176,8 @@ function Bankroll() {
             </tr>
           </thead>
           <tbody>
-            {sessions.map((session, index) => (
-              <tr key={index}>
+            {sessions.map((session) => (
+              <tr key={session.id}>
                 <td>{session.session}</td>
                 <td>{session.date}</td>
                 <td style={{ color: session.score >= 0 ? 'green' : 'red' }}>
@@ -157,8 +191,9 @@ function Bankroll() {
       <div className="button-group">
         <button>View Graph</button>
         <button onClick={() => setIsModalOpen(true)}>Add Entry</button>
+        <button onClick={() => setActiveModal('initializeBankroll')}>Initialize Bankroll</button>
       </div>
-
+  
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -202,8 +237,8 @@ function Bankroll() {
                 <input
                   type="date"
                   name="date"
-                  value={selectedDate} 
-                  onChange={handleInputChange}
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                   required
                 />
               </label>
@@ -218,6 +253,28 @@ function Bankroll() {
                 />
               </label>
               <button type="submit">Add Session</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'initializeBankroll' && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close-button" onClick={() => setActiveModal(null)}>&times;</span>
+            <h3>Initialize Bankroll</h3>
+            <form onSubmit={handleInitializeBankroll}>
+              <label>
+                Initial Bankroll Amount:
+                <input
+                  type="number"
+                  name="initialBankroll"
+                  value={initialBankroll}
+                  onChange={handleInputChange}
+                  required
+                />
+              </label>
+              <button type="submit">Initialize</button>
             </form>
           </div>
         </div>
