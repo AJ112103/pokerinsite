@@ -32,8 +32,6 @@ exports.createStripeSession = functions.https.onCall(async (data, context) => {
   }
 
   const customerId = userSnap.data().stripeCustomerId;
-  console.log(customerId); // Log to check if the key is being recognized
-  console.log("Stripe initialized with key:", stripe); // Log to check if the key is being recognized
 
 
   try {
@@ -45,8 +43,8 @@ exports.createStripeSession = functions.https.onCall(async (data, context) => {
         quantity: 1
       }],
       mode: 'subscription',  // Change to 'payment' if this is a one-time payment
-      success_url: 'https://yourdomain.com/success',
-      cancel_url: 'https://yourdomain.com/cancel',
+      success_url: 'http://localhost:3000/payment-success',  // Make sure to include http:// and the correct port number
+      cancel_url: 'http://localhost:3000/payment-failure',
     });
 
     return { sessionId: session.url };
@@ -54,4 +52,45 @@ exports.createStripeSession = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', error.message, error);
   }
 });
+
+exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.rawBody, sig, "whsec_y6o7gAeUD719hjocZIEIlnspLseTh3mp");
+    } catch (err) {
+        console.error('Webhook signature verification failed.', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle different types of events
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        if (session.mode === 'subscription') {
+            updateSubscriptionStatus(session.customer, 'Basic');
+        }
+    } else if (event.type === 'customer.subscription.deleted' || event.type === 'invoice.payment_failed') {
+        const subscription = event.data.object;
+        updateSubscriptionStatus(subscription.customer, 'Free');
+    }
+
+    res.json({received: true});
+});
+
+async function updateSubscriptionStatus(customerId, tier) {
+    const usersRef = admin.firestore().collection('users');
+    const snapshot = await usersRef.where('stripeCustomerId', '==', customerId).get();
+    if (snapshot.empty) {
+        console.log('No matching user found.');
+        return;
+    }
+
+    snapshot.forEach(doc => {
+        usersRef.doc(doc.id).update({
+            subscriptionTier: tier
+        });
+    });
+}
+
 

@@ -5,7 +5,7 @@ import './SubscriptionPopup.css';
 function SubscriptionPopup({ onClose }) {
   const handleSubscribe = async () => {
     const functions = getFunctions();
-    const createStripeSession = httpsCallable(functions, 'on_request_example');
+    const createStripeSession = httpsCallable(functions, 'createStripeSession');
 
     createStripeSession().then(({ data }) => {
         console.log(data);

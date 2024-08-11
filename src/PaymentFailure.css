@@ -1,0 +1,50 @@
+.failure-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.crossmark {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 20px;
+}
+
+.crossmark-circle {
+    stroke: #FF6347; /* Tomato red for visibility */
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.crossmark-cross {
+    stroke: #FF6347;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 78;
+    stroke-dashoffset: 78;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.message {
+    font-size: 24px;
+    color: #333;
+}
+
+.home-link {
+    margin-top: 20px;
+    color: #a7a7a7;
+    cursor: pointer;
+    text-decoration: underline;
+}
