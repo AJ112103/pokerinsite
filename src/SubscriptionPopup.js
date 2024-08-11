@@ -2,12 +2,6 @@ import React from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import './SubscriptionPopup.css';
 
-
-function SubscriptionPopup({ onClose }) {
-  const handleSubscribe = async () => {
-    const functions = getFunctions();
-    const createStripeSession = httpsCallable(functions, 'on_request_example');
-
 function SubscriptionPopup({ onClose }) {
   const handleSubscribe = async () => {
     const functions = getFunctions();
