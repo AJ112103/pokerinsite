@@ -124,54 +124,61 @@ exports.checkUploadPermission = functions.https.onCall(async (data, context) => 
 });
 
 exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, context) => {
-    // Authentication check
     if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+        throw new functions.https.HttpsError('unauthenticated', 'Authentication is required.');
     }
 
-    // Retrieve the user ID from the authentication context
     const userId = context.auth.uid;
-
-    // Data validation
     const { sessionName, date, score } = data;
-    if (!sessionName || !date || typeof score !== 'number') {
+
+    if (!date || typeof score !== 'number') {
         throw new functions.https.HttpsError('invalid-argument', 'Missing mandatory fields or incorrect types.');
     }
 
-    // Transaction to handle the bankroll entry and netScore atomically
-    const transactionResult = await admin.firestore().runTransaction(async (transaction) => {
-        const userDocRef = admin.firestore().collection('userData').doc(userId);
-        const bankrollRef = userDocRef.collection('bankroll').doc('details');
-        
-        const bankrollDoc = await transaction.get(bankrollRef);
-        let netScore = 0; // Initialize netScore to 0 if the document does not exist or has no netScore
+    const userDocRef = admin.firestore().collection('userData').doc(userId);
+    const settingsRef = userDocRef.collection('settings').doc('bankrollCounter');
+    const bankrollRef = userDocRef.collection('bankroll').doc('details');
 
-        // If the document exists and has a netScore, update it
-        if (bankrollDoc.exists && bankrollDoc.data().netScore !== undefined) {
-            netScore = bankrollDoc.data().netScore + score;
-        } else {
-            // Initialize netScore with the current score if it's the first entry
-            netScore = score;
-        }
+    try {
+        const transactionResult = await admin.firestore().runTransaction(async (transaction) => {
+            // Read required documents first
+            const settingsDoc = await transaction.get(settingsRef);
+            const bankrollDoc = await transaction.get(bankrollRef);
 
-        // Set or update the net score
-        transaction.set(bankrollRef, { netScore }, { merge: true });
+            let counter = settingsDoc.exists ? settingsDoc.data().counter : 0;
+            const newName = sessionName || `Pokernow Session #${counter + 1}`;
 
-        // Add new entry
-        const entryRef = bankrollRef.collection('entries').doc();
-        transaction.set(entryRef, {
-            name: sessionName,
-            date,
-            score
+            // Calculate the new net score
+            let netScore = bankrollDoc.exists && bankrollDoc.data().netScore !== undefined ? bankrollDoc.data().netScore + score : score;
+
+            // Update counter and bankroll entry atomically
+            transaction.set(settingsRef, { counter: counter + 1 }, { merge: true });
+            transaction.set(bankrollRef, { netScore }, { merge: true });
+
+            // Create a new bankroll entry
+            const entryRef = bankrollRef.collection('entries').doc();
+            transaction.set(entryRef, {
+                name: newName,
+                date,
+                score
+            });
+
+            // Return useful data from the transaction
+            return { netScore, entryId: entryRef.id, newName };
         });
 
-        // Return both netScore and the ID of the new entry
-        return { netScore, entryId: entryRef.id };
-    });
-
-    // Returning both netScore and entryId to the client
-    return { netScore: transactionResult.netScore, entryId: transactionResult.entryId };
+        return { 
+            message: "Bankroll entry and score updated successfully.",
+            netScore: transactionResult.netScore,
+            entryId: transactionResult.entryId,
+            sessionName: transactionResult.newName
+        };
+    } catch (error) {
+        console.error('Failed to update bankroll:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to update bankroll.', error);
+    }
 });
+
 
 exports.getBankrollData = functions.https.onCall(async (data, context) => {
     // Authentication check
@@ -232,6 +239,8 @@ exports.deleteBankrollEntryAndUpdateScore = functions.https.onCall(async (data, 
         const userDocRef = admin.firestore().collection('userData').doc(userId);
         const bankrollRef = userDocRef.collection('bankroll').doc('details');
         const entryRef = bankrollRef.collection('entries').doc(entryId);
+
+
 
         const entryDoc = await transaction.get(entryRef);
         if (!entryDoc.exists) {

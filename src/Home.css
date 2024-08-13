@@ -103,7 +103,6 @@
   padding: 10px;
   cursor: pointer;
   height: 35px;
-  text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap; /* Prevents text wrapping */
   color: black; /* Ensures text is readable */

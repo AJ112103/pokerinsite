@@ -30,7 +30,7 @@ function Home() {
   };
 
   const truncateName = (name) => {
-    const maxLength = 12;  // Set max length for the display name
+    const maxLength = 7;  // Set max length for the display name
     if (name.length > maxLength) {
       return `${name.substring(0, maxLength)}...`; // Truncate and add ellipsis
     }
@@ -149,11 +149,66 @@ function Home() {
     setSelectedPlayers({});
     setShowSubscriptionPopup(false);
     setIncludeCents(false);
-
+    setIsSuccess(false);
   }
- 
-  function logParser() {
+
+  function addPlayerData() {
     setIsLoading(true);
+    let totalNet = 0;
+    Object.entries(selectedPlayers).forEach(([playerName, isSelected]) => {
+      if (isSelected) {
+        console.log(playersData[playerName]);
+        totalNet += playersData[playerName].net;
+      }
+    });
+    if (includeCents)
+      {
+        totalNet = totalNet/100;
+      }
+    const currentDate = formatDate();
+    const functions = getFunctions();
+      const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
+      addBankrollEntryAndUpdateScore({
+        date: currentDate,
+        score: totalNet
+      }).then((result) => {
+        if (logFile) {
+
+        }
+        else {
+          setIsLoading(false);
+          setIsSuccess(true);
+          setTimeout(() => resetData(), 1000); 
+        }
+      }).catch((error) => {
+        console.error('Error updating bankroll:', error);
+      });
+  }
+
+  const formatDate = (date = new Date()) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const targetDate = new Date(date); // Use the current date if no date is provided
+    const formattedDate = targetDate.toLocaleDateString('en-US', options);
+    
+    const day = targetDate.getDate();
+    const month = targetDate.toLocaleString('en-US', { month: 'long' });
+    const year = targetDate.getFullYear();
+
+    const daySuffix = (day) => {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+
+    // Construct the date manually to avoid locale-specific issues with replace
+    return `${month} ${day}${daySuffix(day)}, ${year}`;
+};
+ 
+  function logParser() {  
     if (logFile) {
         const storage = getStorage();
         const storageRef = ref(storage, 'uploads/' + logFile.name);
@@ -173,7 +228,7 @@ function Home() {
     } else {
         setIsUploaded(false);
     }
-}
+  }
     const closePopup = () => {
       setShowSubscriptionPopup(false);
     };
@@ -273,7 +328,7 @@ function Home() {
                 />
               </label>
             </div>
-            <button className="uploadButton" onClick={() => logParser()}>
+            <button className="uploadButton" onClick={() => addPlayerData()}>
               Confirm
             </button>
           </>
