@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Bankroll.css';
 import { parse } from 'date-fns';
-import { getFunctions, httpsCallable } from "firebase/functions"; 
-
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 function Bankroll() {
   const [sessions, setSessions] = useState([]);
@@ -31,12 +32,9 @@ function Bankroll() {
       const functions = getFunctions();
       const getBankrollData = httpsCallable(functions, 'getBankrollData');
       const result = await getBankrollData();
-      if (result.data.status === "not-initialized")
-      {
+      if (result.data.status === "not-initialized") {
         setNetScore(0);
-      }
-      else
-      {
+      } else {
         setNetScore(result.data.netScore);
         setSessions(result.data.entries.map(entry => ({
           id: entry.id,
@@ -53,7 +51,7 @@ function Bankroll() {
   const formatDate = (date) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     const formattedDate = new Date(date).toLocaleDateString('en-US', options);
-    
+
     const day = new Date(date).getDate();
     const daySuffix = (day) => {
       if (day > 3 && day < 21) return 'th';
@@ -64,13 +62,12 @@ function Bankroll() {
         default: return 'th';
       }
     };
-    
+
     return formattedDate.replace(day, `${day}${daySuffix(day)}`);
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-
 
     let sessionName = '';
     if (sessionType === 'custom') {
@@ -82,7 +79,7 @@ function Bankroll() {
     const sessionData = {
       ...newSession,
       session: sessionName,
-      date: formatDate(selectedDate), 
+      date: formatDate(selectedDate),
       score: parseFloat(newSession.score),
     };
 
@@ -145,16 +142,33 @@ function Bankroll() {
       }
       return 0;
     });
-  
+
     setSortConfig({ key, direction });
     setSessions(sortedSessions);
   };
-  
+
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return "";
     return sortConfig.direction === 'ascending' ? '▼' : '▲';
   };
-  
+
+  const handleDelete = async (sessionId) => {
+    
+    setSessions(sessions.filter(session => session.id !== sessionId));
+    
+    try {
+      const functions = getFunctions();
+      const deleteBankrollEntryAndUpdateScore = httpsCallable(functions, 'deleteBankrollEntryAndUpdateScore');
+      await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
+      
+      // Refresh the data from the backend after deletion
+      await fetchBankrollData();
+    } catch (error) {
+      console.error('Error deleting bankroll entry:', error);
+    }
+    
+  };
+
   return (
     <div className="bankroll-container">
       <h2>Your Total Bankroll: ${netScore}</h2>
@@ -179,6 +193,11 @@ function Bankroll() {
                 <td style={{ color: session.score >= 0 ? 'green' : 'red' }}>
                   {session.score >= 0 ? `+$${session.score}` : `-$${Math.abs(session.score)}`}
                 </td>
+                <td className="delete-button-cell">
+                  <button className="delete-button" onClick={() => handleDelete(session.id)}>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -187,7 +206,7 @@ function Bankroll() {
       <div className="button-group">
         <button onClick={() => setIsModalOpen(true)}>Add Entry</button>
       </div>
-  
+
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -246,7 +265,7 @@ function Bankroll() {
                   required
                 />
               </label>
-              <button type="submit">Add Session</button>
+              <button type="submit">Save Session</button>
             </form>
           </div>
         </div>
