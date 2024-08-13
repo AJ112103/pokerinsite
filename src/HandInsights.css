@@ -1,61 +1,111 @@
-@import './GameAnalysis.css';
-
-/* Hand Insights Specific Styles */
 .hand-insights-container {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 20px auto;
   padding: 20px;
   text-align: center;
   font-family: Arial, sans-serif;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   background-color: #fff;
+  position: relative;
 }
 
-.hand-insights-container h2 {
-  color: #333;
-}
-
+.hand-insights-container h2,
 .hand-insights-container h3 {
-  margin-top: 20px;
   color: #333;
 }
 
-.hand-insights-container table {
+.table-hand {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   margin-top: 20px;
   border: 1px solid #ccc;
+  border-radius: 10px;
+  text-align: center;
 }
 
-.hand-insights-container th, .hand-insights-container td {
+.table-hand th, 
+.table-hand td {
   padding: 10px;
   text-align: center;
   border: none;
 }
 
-.hand-insights-container th {
+.table-hand th {
   background-color: #f5f5f5;
   border-bottom: 1px solid #ccc;
 }
 
-.hand-insights-container tr:last-child td {
+.table-hand tr:last-child td {
   border-bottom: none;
 }
 
-.hand-insights-container tr:hover {
+.table-hand tr:hover {
   background-color: #f0f0f0;
 }
 
-.hand-insights-container .positive {
+.positive {
   color: green;
 }
 
-.hand-insights-container .negative {
+.negative {
   color: red;
 }
 
-.table-hand{
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
   border-radius: 10px;
+  max-width: 400px;
+  max-height: 80%;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.modal-content ul li {
+  margin: 10px;
+  font-size: 16px;
+  padding: 10px 20px;
+  background-color: #f5f5f5;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+.modal-content ul li:hover {
+  background-color: #e0e0e0;
+}
+
+.submit-button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: gray; /* Green color for submit button */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }

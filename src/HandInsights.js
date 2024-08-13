@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import './HandInsights.css'
+import { useNavigate } from 'react-router-dom';
 
 const sampleData = [
   { handNumber: 1, yourHand: 'A♠ K♠', totalPot: 500, winner: 'Player 2', yourNet: -200, players: ['You', 'Player 2', 'Player 3'] },
@@ -16,16 +18,45 @@ const sampleData = [
 const HandInsights = () => {
   const [handData, setHandData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false);
-  const [selectedWinner, setSelectedWinner] = useState(null);
-  const [winnerHandsData, setWinnerHandsData] = useState([]);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [filteredHandData, setFilteredHandData] = useState([]);
+  const navigate = useNavigate();
+  const handleRowClick = (handNumber) => {
+      navigate(`/hand-insights/${handNumber}`);
+    };
 
   useEffect(() => {
-    // Simulating an API call
     setTimeout(() => {
       setHandData(sampleData);
+      setPlayers([...new Set(sampleData.flatMap(hand => hand.players))]); // Extract unique players
+      setFilteredHandData(sampleData);
     }, 500);
   }, []);
+
+  // useEffect(() => {
+  //   fetchHandData();
+  // }, []);
+
+  // const fetchHandData = async () => {
+  //   try {
+  //     const functions = getFunctions();
+  //     const getHandData = httpsCallable(functions, 'getHandData');
+  //     const result = await getHandData();
+  //     setHandData(result.data.handData);
+  //     setSessions(result.data.entries.map(entry => ({
+  //       handNumber: ,
+  //       yourHand: xy,
+  //       totalPot: yz,
+  //       winner: 123,
+  //       yourNet: 1234,
+  //       players: []
+
+  //     })));
+  //   } catch (error) {
+  //     console.error('Error fetching Hand data:', error);
+  //   }
+  // };
 
   const sortData = (key) => {
     let direction = 'ascending';
@@ -34,118 +65,73 @@ const HandInsights = () => {
     }
     setSortConfig({ key, direction });
 
-    const sortedData = [...handData].sort((a, b) => {
+    const sortedData = [...filteredHandData].sort((a, b) => {
       if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
       if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
       return 0;
     });
 
-    setHandData(sortedData);
+    setFilteredHandData(sortedData);
   };
 
-  const openWinnerModal = (winner) => {
-    setSelectedWinner(winner);
-    setWinnerHandsData(handData.filter(hand => hand.winner === winner));
-    setIsWinnerModalOpen(true);
+  const openPlayerModal = () => {
+    setIsPlayerModalOpen(true);
   };
 
-  const closeWinnerModal = () => {
-    setIsWinnerModalOpen(false);
-    setSelectedWinner(null);
-    setWinnerHandsData([]);
+  const closePlayerModal = () => {
+    setIsPlayerModalOpen(false);
   };
+
+  const filterByPlayer = (player) => {
+    setFilteredHandData(player === 'All' ? handData : handData.filter(hand => hand.winner === player));
+    closePlayerModal();
+  };
+
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Online Session #2</h2>
-      <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Hand Insights</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div className="hand-insights-container">
+      <h2>Online Session #2</h2>
+      <h3>Hand Insights</h3>
+      <table className="table-hand">
         <thead>
           <tr>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Hand Number</th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Your Hand</th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>
-              Total Pot
-              <button onClick={() => sortData('totalPot')} style={{ marginLeft: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                ↕️
-              </button>
+            <th onClick={openPlayerModal} style={{ cursor: 'pointer' }}>Hand Number</th>
+            <th>Your Hand</th>
+            <th onClick={() => sortData('totalPot')} style={{ cursor: 'pointer' }}>
+              Total Pot ↕️
             </th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Winner</th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>
-              Your Net
-              <button onClick={() => sortData('yourNet')} style={{ marginLeft: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                ↕️
-              </button>
+            <th onClick={openPlayerModal} style={{ cursor: 'pointer' }}>Winner</th>
+            <th onClick={() => sortData('yourNet')} style={{ cursor: 'pointer' }}>
+              Your Net ↕️
             </th>
           </tr>
         </thead>
         <tbody>
-          {handData.map((hand) => (
-            <tr key={hand.handNumber}>
-              <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{hand.handNumber}</td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{hand.yourHand}</td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{hand.totalPot}</td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>
-                <button onClick={() => openWinnerModal(hand.winner)} style={{ background: 'none', border: 'none', color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}>
-                  {hand.winner}
-                </button>
-              </td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #ddd', color: hand.yourNet >= 0 ? 'green' : 'red' }}>
-                {hand.yourNet}
-              </td>
+          {filteredHandData.map((hand) => (
+            <tr key={hand.handNumber} onClick={() => handleRowClick(hand.handNumber)} style={{ cursor: 'pointer' }}>
+              <td>{hand.handNumber}</td>
+              <td>{hand.yourHand}</td>
+              <td>{hand.totalPot}</td>
+              <td>{hand.winner}</td>
+              <td className={hand.yourNet >= 0 ? 'positive' : 'negative'}>{hand.yourNet}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {isWinnerModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '5px',
-            maxWidth: '80%',
-            maxHeight: '80%',
-            overflow: 'auto'
-          }}>
-            <h2 style={{ marginBottom: '16px' }}>{selectedWinner}'s Winning Hands</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Hand Number</th>
-                  <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Total Pot</th>
-                </tr>
-              </thead>
-              <tbody>
-                {winnerHandsData.map((hand) => (
-                  <tr key={hand.handNumber}>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{hand.handNumber}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{hand.totalPot}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button onClick={closeWinnerModal} style={{
-              marginTop: '16px',
-              padding: '8px 16px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}>
-              Close
-            </button>
+      {isPlayerModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Select a Player</h2>
+            <ul>
+              <li className="player-item" onClick={() => filterByPlayer('All')}>All</li>
+              {players.map((player, index) => (
+                <li key={index} className="player-item" onClick={() => filterByPlayer(player)}>
+                  {player}
+                </li>
+              ))}
+            </ul>
+            <button onClick={closePlayerModal} className="submit-button">Close</button>
           </div>
         </div>
       )}
@@ -153,4 +139,4 @@ const HandInsights = () => {
   );
 };
 
-export default HandInsights; 
+export default HandInsights;

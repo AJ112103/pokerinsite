@@ -12,6 +12,7 @@ import PlayerInsights from './PlayerInsights';
 import PaymentSuccess from './PaymentSuccess';
 import PaymentFailure from './PaymentFailure';
 import RouletteLoader from './RouletteLoader';
+import SpecificHandInsights from './SpecificHandInsights';
 
 function App() {
   const location = useLocation();
@@ -77,6 +78,19 @@ function App() {
           path="/payment-failure" 
           element={
               <PaymentFailure />
+          } 
+        />
+        <Route 
+          path="/hand-insights" 
+          element={
+              <HandInsights />
+          } 
+        />
+        <Route 
+          path="/hand-insights/:handNumber" 
+          element={
+              <SpecificHandInsights 
+              />
           } 
         />
       </Routes>

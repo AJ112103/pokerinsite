@@ -23,6 +23,31 @@ const PlayerInsights = () => {
     }, 500);
   }, []);
 
+   // useEffect(() => {
+  //   fetchPlayerData();
+  // }, []);
+
+  // const fetchPlayerData = async () => {
+  //   try {
+  //     const functions = getFunctions();
+  //     const getPlayerData = httpsCallable(functions, 'getPlayerData');
+  //     const result = await getPlayerData();
+  //     setPlayerData(result.data.entries.map(entry => ({
+  //           netScore: entry.netScore,
+            // handsPlayed: entry.,
+            // amountWon: 1000,
+            // amountLost: 850,
+            // flopsSeen: '50%',
+            // turnsSeen: '40%',
+            // riversSeen: '30%',
+            // handsWon: '20%'
+  //     })));
+  //   } catch (error) {
+  //     console.error('Error fetching Hand data:', error);
+  //   }
+  // };
+  
+
   return (
     <div className="player-insights-container">
       <h2>Player 1</h2>
