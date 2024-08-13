@@ -144,11 +144,14 @@ exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, con
         const bankrollRef = userDocRef.collection('bankroll').doc('details');
         
         const bankrollDoc = await transaction.get(bankrollRef);
-        let netScore = score;
+        let netScore = 0; // Initialize netScore to 0 if the document does not exist or has no netScore
 
-        if (bankrollDoc.exists) {
-            // Update existing net score
+        // If the document exists and has a netScore, update it
+        if (bankrollDoc.exists && bankrollDoc.data().netScore !== undefined) {
             netScore = bankrollDoc.data().netScore + score;
+        } else {
+            // Initialize netScore with the current score if it's the first entry
+            netScore = score;
         }
 
         // Set or update the net score
@@ -179,17 +182,19 @@ exports.getBankrollData = functions.https.onCall(async (data, context) => {
     // Retrieve the user ID from the authentication context
     const userId = context.auth.uid;
 
-    try {
-        const userDocRef = admin.firestore().collection('userData').doc(userId);
-        const bankrollRef = userDocRef.collection('bankroll').doc('details');
+    const userDocRef = admin.firestore().collection('userData').doc(userId);
+    const bankrollRef = userDocRef.collection('bankroll').doc('details');
 
-        // Fetch the bankroll details document
+    try {
         const bankrollDoc = await bankrollRef.get();
         if (!bankrollDoc.exists) {
-            throw new functions.https.HttpsError('not-found', 'Bankroll data not found.');
+            // Instead of throwing an error, return a specific message or status
+            return {
+                status: 'not-initialized',
+                message: 'No bankroll data found. Please set up your bankroll.'
+            };
         }
 
-        // Fetch all entries under this bankroll
         const entriesRef = bankrollRef.collection('entries');
         const entriesSnapshot = await entriesRef.get();
         const entries = entriesSnapshot.docs.map(doc => ({
@@ -197,8 +202,8 @@ exports.getBankrollData = functions.https.onCall(async (data, context) => {
             ...doc.data()
         }));
 
-        // Prepare and return the data
         return {
+            status: 'Success',
             netScore: bankrollDoc.data().netScore,
             entries: entries
         };

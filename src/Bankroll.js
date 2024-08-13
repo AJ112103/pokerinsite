@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './Bankroll.css';
 import { parse } from 'date-fns';
-import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions"; 
 
 
 function Bankroll() {
   const [sessions, setSessions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
   const [newSession, setNewSession] = useState({
     session: '',
     date: '',
@@ -24,7 +21,6 @@ function Bankroll() {
     direction: 'ascending',
   });
   const [netScore, setNetScore] = useState(0);
-  const [initialBankroll, setInitialBankroll] = useState('');
 
   useEffect(() => {
     fetchBankrollData();
@@ -35,13 +31,20 @@ function Bankroll() {
       const functions = getFunctions();
       const getBankrollData = httpsCallable(functions, 'getBankrollData');
       const result = await getBankrollData();
-      setNetScore(result.data.netScore);
-      setSessions(result.data.entries.map(entry => ({
-        id: entry.id,
-        session: entry.name,
-        date: entry.date,
-        score: entry.score
-      })));
+      if (result.data.status === "not-initialized")
+      {
+        setNetScore(0);
+      }
+      else
+      {
+        setNetScore(result.data.netScore);
+        setSessions(result.data.entries.map(entry => ({
+          id: entry.id,
+          session: entry.name,
+          date: entry.date,
+          score: entry.score
+        })));
+      }
     } catch (error) {
       console.error('Error fetching bankroll data:', error);
     }
@@ -126,13 +129,6 @@ function Bankroll() {
     setCustomSession('');
   };
 
-  const handleInitializeBankroll = (e) => {
-    e.preventDefault();
-    setNetScore(parseFloat(initialBankroll));
-    setInitialBankroll('');
-    setActiveModal(null);
-  };
-
   const sortSessions = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -189,9 +185,7 @@ function Bankroll() {
         </table>
       </div>
       <div className="button-group">
-        <button>View Graph</button>
         <button onClick={() => setIsModalOpen(true)}>Add Entry</button>
-        <button onClick={() => setActiveModal('initializeBankroll')}>Initialize Bankroll</button>
       </div>
   
       {isModalOpen && (
@@ -253,28 +247,6 @@ function Bankroll() {
                 />
               </label>
               <button type="submit">Add Session</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {activeModal === 'initializeBankroll' && (
-        <div className="modal">
-          <div className="modal-content">
-            <span className="close-button" onClick={() => setActiveModal(null)}>&times;</span>
-            <h3>Initialize Bankroll</h3>
-            <form onSubmit={handleInitializeBankroll}>
-              <label>
-                Initial Bankroll Amount:
-                <input
-                  type="number"
-                  name="initialBankroll"
-                  value={initialBankroll}
-                  onChange={handleInputChange}
-                  required
-                />
-              </label>
-              <button type="submit">Initialize</button>
             </form>
           </div>
         </div>

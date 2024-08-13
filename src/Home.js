@@ -111,17 +111,18 @@ function Home() {
                 const parsedPlayersData = {};
 
                 results.data.forEach(row => {
-                    const playerNickname = row.player_nickname;
-                    if (playerNickname) {
-                        parsedPlayersData[playerNickname] = {
-                            player_id: row.player_id,
-                            buy_in: row.buy_in,
-                            buy_out: row.buy_out,
-                            stack: row.stack,
-                            net: row.net
-                        };
-                    }
-                });
+                  const playerNickname = row.player_nickname;
+                  if (playerNickname) {
+                      if (parsedPlayersData.hasOwnProperty(playerNickname)) {
+                          parsedPlayersData[playerNickname].net += row.net;
+                      } else {
+                          parsedPlayersData[playerNickname] = {
+                              player_id: row.player_id,
+                              net: row.net
+                          };
+                      }
+                  }
+              });
                 console.log("Parsed Data:", parsedPlayersData);
                 setPlayersData(parsedPlayersData);
                 if (onParseComplete) {
