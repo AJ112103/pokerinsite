@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './HandInsights.css'
+import { useNavigate } from 'react-router-dom';
 
 const sampleData = [
   { handNumber: 1, yourHand: 'A♠ K♠', totalPot: 500, winner: 'Player 2', yourNet: -200, players: ['You', 'Player 2', 'Player 3'] },
@@ -20,6 +21,10 @@ const HandInsights = () => {
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [players, setPlayers] = useState([]);
   const [filteredHandData, setFilteredHandData] = useState([]);
+  const navigate = useNavigate();
+  const handleRowClick = (handNumber) => {
+      navigate(`/hand-insights/${handNumber}`);
+    };
 
   useEffect(() => {
     setTimeout(() => {
@@ -103,7 +108,7 @@ const HandInsights = () => {
         </thead>
         <tbody>
           {filteredHandData.map((hand) => (
-            <tr key={hand.handNumber}>
+            <tr key={hand.handNumber} onClick={() => handleRowClick(hand.handNumber)} style={{ cursor: 'pointer' }}>
               <td>{hand.handNumber}</td>
               <td>{hand.yourHand}</td>
               <td>{hand.totalPot}</td>

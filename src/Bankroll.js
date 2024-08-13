@@ -147,11 +147,6 @@ function Bankroll() {
     setSessions(sortedSessions);
   };
 
-  const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return "";
-    return sortConfig.direction === 'ascending' ? '▼' : '▲';
-  };
-
   const handleDelete = async (sessionId) => {
     
     setSessions(sessions.filter(session => session.id !== sessionId));
@@ -178,10 +173,10 @@ function Bankroll() {
             <tr>
               <th>Session</th>
               <th onClick={() => sortSessions('date')}>
-                Date {getSortIcon('date')}
+                Date ↕️
               </th>
               <th onClick={() => sortSessions('score')}>
-                Net Score {getSortIcon('score')}
+                Net Score ↕️
               </th>
             </tr>
           </thead>
