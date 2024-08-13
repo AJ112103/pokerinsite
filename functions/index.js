@@ -132,7 +132,7 @@ exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, con
     const { sessionName, date, score } = data;
 
     if (!date || typeof score !== 'number') {
-        throw new functions.https.HttpsError('invalid-argument', 'Missing mandatory fields or incorrect types.');
+        throw new functions.https.HttpsError('invalid-argument', 'Score must be a number and date must be provided.');
     }
 
     const userDocRef = admin.firestore().collection('userData').doc(userId);
@@ -141,29 +141,32 @@ exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, con
 
     try {
         const transactionResult = await admin.firestore().runTransaction(async (transaction) => {
-            // Read required documents first
             const settingsDoc = await transaction.get(settingsRef);
             const bankrollDoc = await transaction.get(bankrollRef);
+            const entriesRef = bankrollRef.collection('entries');
+
+            // Calculate the new net score by summing all existing scores
+            let netScore = score; // Start with the new score
+            const entriesSnapshot = await entriesRef.get();
+            entriesSnapshot.forEach(doc => {
+                netScore += doc.data().score; // Sum up all scores
+            });
 
             let counter = settingsDoc.exists ? settingsDoc.data().counter : 0;
             const newName = sessionName || `Pokernow Session #${counter + 1}`;
-
-            // Calculate the new net score
-            let netScore = bankrollDoc.exists && bankrollDoc.data().netScore !== undefined ? bankrollDoc.data().netScore + score : score;
 
             // Update counter and bankroll entry atomically
             transaction.set(settingsRef, { counter: counter + 1 }, { merge: true });
             transaction.set(bankrollRef, { netScore }, { merge: true });
 
             // Create a new bankroll entry
-            const entryRef = bankrollRef.collection('entries').doc();
+            const entryRef = entriesRef.doc();
             transaction.set(entryRef, {
                 name: newName,
                 date,
                 score
             });
 
-            // Return useful data from the transaction
             return { netScore, entryId: entryRef.id, newName };
         });
 
@@ -221,12 +224,10 @@ exports.getBankrollData = functions.https.onCall(async (data, context) => {
 });
 
 exports.deleteBankrollEntryAndUpdateScore = functions.https.onCall(async (data, context) => {
-    // Authentication check
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
     }
 
-    // Retrieve the user ID from the authentication context
     const userId = context.auth.uid;
     const entryId = data.entryId; // ID of the entry to be deleted
 
@@ -234,38 +235,41 @@ exports.deleteBankrollEntryAndUpdateScore = functions.https.onCall(async (data, 
         throw new functions.https.HttpsError('invalid-argument', 'Missing mandatory field: entryId.');
     }
 
-    // Transaction to handle the deletion of the entry and update the netScore atomically
-    const result = await admin.firestore().runTransaction(async (transaction) => {
-        const userDocRef = admin.firestore().collection('userData').doc(userId);
-        const bankrollRef = userDocRef.collection('bankroll').doc('details');
-        const entryRef = bankrollRef.collection('entries').doc(entryId);
+    try {
+        const result = await admin.firestore().runTransaction(async (transaction) => {
+            const userDocRef = admin.firestore().collection('userData').doc(userId);
+            const bankrollRef = userDocRef.collection('bankroll').doc('details');
+            const entryRef = bankrollRef.collection('entries').doc(entryId);
 
+            // Check if the entry exists
+            const entryDoc = await transaction.get(entryRef);
+            if (!entryDoc.exists) {
+                throw new functions.https.HttpsError('not-found', 'Bankroll entry not found.');
+            }
 
+            // Delete the entry first
 
-        const entryDoc = await transaction.get(entryRef);
-        if (!entryDoc.exists) {
-            throw new functions.https.HttpsError('not-found', 'Bankroll entry not found.');
-        }
+            // Recalculate the net score by summing the scores of all remaining entries
+            const entriesSnapshot = await transaction.get(bankrollRef.collection('entries'));
+            let newNetScore = 0; // Reset net score to recalculate
+            entriesSnapshot.forEach(doc => {
+                if (doc.id !== entryId) { // Make sure to exclude the entry being deleted
+                    newNetScore += doc.data().score;
+                }
+            });
 
-        const entryData = entryDoc.data();
-        const scoreToSubtract = entryData.score;
+            transaction.delete(entryRef);
 
-        const bankrollDoc = await transaction.get(bankrollRef);
-        if (!bankrollDoc.exists) {
-            throw new functions.https.HttpsError('not-found', 'Bankroll details not found.');
-        }
+            // Update the net score
+            transaction.update(bankrollRef, { netScore: newNetScore });
 
-        let netScore = bankrollDoc.data().netScore - scoreToSubtract;
+            return newNetScore; // Return the updated net score
+        });
 
-        // Update the net score
-        transaction.update(bankrollRef, { netScore });
-
-        // Delete the entry
-        transaction.delete(entryRef);
-
-        return netScore; // Return the updated net score
-    });
-
-    return { netScore: result };
+        return { netScore: result, message: "Bankroll entry deleted and net score updated successfully." };
+    } catch (error) {
+        console.error('Failed to update bankroll:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to update bankroll.', error);
+    }
 });
 

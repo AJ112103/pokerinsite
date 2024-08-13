@@ -84,22 +84,6 @@ function Bankroll() {
     };
 
     setSessions([...sessions, sessionData]);
-
-    async function saveBankroll(sessionData) {
-      const functions = getFunctions();
-      const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
-      addBankrollEntryAndUpdateScore({
-        sessionName: sessionData.session,
-        date: sessionData.date,
-        score: sessionData.score
-      }).then((result) => {
-        console.log('Updated Net Score:', result.data.netScore);
-        setNetScore(result.data.netScore);
-      }).catch((error) => {
-        console.error('Error updating bankroll:', error);
-      });
-    }
-
     saveBankroll(sessionData);
 
     setIsModalOpen(false);
@@ -109,6 +93,21 @@ function Bankroll() {
     setSessionNumber('');
     setCustomSession('');
   };
+
+  async function saveBankroll(sessionData) {
+    const functions = getFunctions();
+    const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
+    addBankrollEntryAndUpdateScore({
+      sessionName: sessionData.session,
+      date: sessionData.date,
+      score: sessionData.score
+    }).then((result) => {
+      console.log('Updated Net Score:', result.data.netScore);
+      setNetScore(result.data.netScore);
+    }).catch((error) => {
+      console.error('Error updating bankroll:', error);
+    });
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
