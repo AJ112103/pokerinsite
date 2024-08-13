@@ -154,10 +154,9 @@ function Bankroll() {
     try {
       const functions = getFunctions();
       const deleteBankrollEntryAndUpdateScore = httpsCallable(functions, 'deleteBankrollEntryAndUpdateScore');
-      await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
-      
-      // Refresh the data from the backend after deletion
-      await fetchBankrollData();
+      const result = await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
+      console.log('Updated Net Score:', result.data.netScore);
+      setNetScore(result.data.netScore);
     } catch (error) {
       console.error('Error deleting bankroll entry:', error);
     }
