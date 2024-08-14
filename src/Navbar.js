@@ -17,7 +17,7 @@ function Navbar() {
         <Link to="/bankroll" className="nav-item">Bankroll</Link>
       </div>
       <div className="user">
-        <FontAwesomeIcon icon={faUser} className="user-icon" />
+      <Link to="/user" className="navbar-link"><FontAwesomeIcon icon={faUser} className="user-icon" /></Link>
       </div>
     </div>
   );

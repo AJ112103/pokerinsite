@@ -6,6 +6,7 @@ import About from './About';
 import Login from './Login';
 import GameAnalysis from './GameAnalysis';
 import Bankroll from './Bankroll';
+import User from './user';
 import PrivateRoute from './PrivateRoute';
 import HandInsights from './HandInsights';
 import PlayerInsights from './PlayerInsights';
@@ -55,6 +56,11 @@ function App() {
               <Bankroll />
             </PrivateRoute>
           } 
+        />
+        <Route
+          path="/user" 
+          element={
+              <User />}  
         /> 
         <Route 
           path="/hand-insights" 
@@ -90,9 +96,9 @@ function App() {
           path="/hand-insights/:handNumber" 
           element={
               <SpecificHandInsights 
-              />
-          } 
+              />}
         />
+
       </Routes>
     </>
   );
