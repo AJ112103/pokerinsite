@@ -173,7 +173,7 @@ function Home() {
         score: totalNet
       }).then((result) => {
         if (logFile) {
-
+          logParser();
         }
         else {
           setIsLoading(false);
@@ -214,7 +214,6 @@ function Home() {
         const storageRef = ref(storage, 'uploads/' + logFile.name);
 
         uploadBytes(storageRef, logFile).then((snapshot) => {
-            console.log('Uploaded a blob or file!', snapshot);
 
             getDownloadURL(snapshot.ref).then((downloadURL) => {
                 console.log('File available at', downloadURL);

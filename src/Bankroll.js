@@ -147,19 +147,25 @@ function Bankroll() {
   };
 
   const handleDelete = async (sessionId) => {
+
+    if (!sessionId)
+      {
+        alert("Session still processing, try deleting in a few seconds");
+      }
+    else
+    {
+      setSessions(sessions.filter(session => session.id !== sessionId));
     
-    setSessions(sessions.filter(session => session.id !== sessionId));
-    
-    try {
-      const functions = getFunctions();
-      const deleteBankrollEntryAndUpdateScore = httpsCallable(functions, 'deleteBankrollEntryAndUpdateScore');
-      const result = await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
-      console.log('Updated Net Score:', result.data.netScore);
-      setNetScore(result.data.netScore);
-    } catch (error) {
-      console.error('Error deleting bankroll entry:', error);
+      try {
+        const functions = getFunctions();
+        const deleteBankrollEntryAndUpdateScore = httpsCallable(functions, 'deleteBankrollEntryAndUpdateScore');
+        const result = await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
+        console.log('Updated Net Score:', result.data.netScore);
+        setNetScore(result.data.netScore);
+      } catch (error) {
+        console.error('Error deleting bankroll entry:', error);
+      }
     }
-    
   };
 
   return (
