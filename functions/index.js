@@ -53,6 +53,68 @@ exports.createStripeSession = functions.https.onCall(async (data, context) => {
   }
 });
 
+exports.getUserData = functions.https.onCall(async (data, context) => {
+    // Check if the user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const userId = context.auth.uid; // Get the UID from the authenticated user
+
+    try {
+        const userRef = admin.firestore().collection('users').doc(userId);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+            throw new functions.https.HttpsError('not-found', 'User data not found.');
+        }
+
+        const userData = doc.data();
+
+        // Return the necessary user data
+        return {
+            email: userData.email,
+            name: userData.name,
+            stripeCustomerId: userData.stripeCustomerId,
+            subscriptionTier: userData.subscriptionTier,
+            uploads: userData.uploads
+        };
+    } catch (error) {
+        console.error('Error retrieving user data:', error);
+        throw new functions.https.HttpsError('unknown', 'Failed to retrieve user data', error);
+    }
+});
+
+exports.cancelStripeSubscription = functions.https.onCall(async (data, context) => {
+    // Check for authenticated user
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to cancel subscriptions.');
+    }
+
+    // Retrieve the customer ID from Firestore
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(context.auth.uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'User does not exist in the database.');
+    }
+
+    const stripeCustomerId = userDoc.data().stripeCustomerId;
+    const subscriptionId = userDoc.data().subscriptionId; // Assume you store subscription ID in Firestore
+
+    try {
+        const subscription = await stripe.subscriptions.update(subscriptionId, {
+            cancel_at_period_end: true
+        });
+
+        return { status: 'success', message: 'Subscription will be canceled at the end of the period.' };
+    } catch (error) {
+        console.error('Failed to cancel subscription:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to cancel subscription.', error.message);
+    }
+});
+
+
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     const sig = req.headers['stripe-signature'];
 
@@ -67,13 +129,35 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     // Handle different types of events
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
+        // Check if the session was for a subscription
         if (session.mode === 'subscription') {
-            updateSubscriptionStatus(session.customer, 'Basic');
+            const subscriptionId = session.subscription;  // Extract the subscription ID from the session object
+            const customerId = session.customer;
+    
+            // Update Firestore with the subscription ID
+            const usersRef = admin.firestore().collection('users');
+            const snapshot = await usersRef.where('stripeCustomerId', '==', customerId).get();
+    
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => {
+                    usersRef.doc(doc.id).update({
+                        subscriptionTier: 'Basic',  // Assuming subscription creates or updates to a 'Basic' tier
+                        subscriptionId: subscriptionId  // Store the subscription ID
+                    });
+                });
+            }
         }
-    } else if (event.type === 'customer.subscription.deleted' || event.type === 'invoice.payment_failed') {
+    } else if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object;
+        // Check if subscription is being canceled at period end
+        if (subscription.cancel_at_period_end && subscription.status === 'active') {
+            updateSubscriptionStatus(subscription.customer, 'Expiring');
+        }
+    } else if (event.type === 'customer.subscription.deleted') {
         const subscription = event.data.object;
         updateSubscriptionStatus(subscription.customer, 'Free');
     }
+    
 
     res.json({received: true});
 });

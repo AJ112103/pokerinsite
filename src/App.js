@@ -1,5 +1,7 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 import Navbar from './Navbar';
 import Home from './Home';
 import About from './About';
@@ -16,15 +18,29 @@ import RouletteLoader from './RouletteLoader';
 import SpecificHandInsights from './SpecificHandInsights';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
+
+    // Clean up the subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   return (
     <>
-      {/* Conditionally render the Navbar based on the current path */}
       {location.pathname !== '/' && <Navbar />}
       
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/add-session" /> : <Login />} />
         <Route 
           path="/add-session" 
           element={
