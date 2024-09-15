@@ -94,6 +94,14 @@ function Bankroll() {
     setCustomSession('');
   };
 
+  const formatBankrollDisplay = (value) => {
+    if (value >= 0) {
+      return `$${value}`;
+    } else {
+      return `-$${Math.abs(value)}`;
+    }
+  };
+
   async function saveBankroll(sessionData) {
     const functions = getFunctions();
     const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
@@ -170,7 +178,7 @@ function Bankroll() {
 
   return (
     <div className="bankroll-container">
-      <h2>Your Total Bankroll: ${netScore}</h2>
+      <h2>Your Total Bankroll: {formatBankrollDisplay(netScore)}</h2>
       <div className="table-wrapper">
         <table>
           <thead>
