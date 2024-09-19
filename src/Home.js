@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Home.css';
 import Papa from 'papaparse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,9 +30,9 @@ function Home() {
   };
 
   const truncateName = (name) => {
-    const maxLength = 7;  // Set max length for the display name
+    const maxLength = 7;
     if (name.length > maxLength) {
-      return `${name.substring(0, maxLength)}...`; // Truncate and add ellipsis
+      return `${name.substring(0, maxLength)}...`;
     }
     return name;
   };
@@ -204,7 +204,6 @@ function Home() {
       }
     };
 
-    // Construct the date manually to avoid locale-specific issues with replace
     return `${month} ${day}${daySuffix(day)}, ${year}`;
 };
  
@@ -212,14 +211,29 @@ function Home() {
     if (logFile) {
         const storage = getStorage();
         const storageRef = ref(storage, 'uploads/' + logFile.name);
+        console.log(selectedPlayers.net);
+        console.log(playersData);
 
         uploadBytes(storageRef, logFile).then((snapshot) => {
 
             getDownloadURL(snapshot.ref).then((downloadURL) => {
                 console.log('File available at', downloadURL);
+                
 
-                // Optionally, send this URL to your Lambda function
-                // sendToLambda(downloadURL);
+                const functions = getFunctions();
+                const storeHardcodedData = httpsCallable(functions, 'storeHardcodedData');
+
+                storeHardcodedData().then((result) => {
+                    if (result.data) {
+                      console.log("YAY");
+                    } else {
+                      console.log("BOO");
+                    }
+                }).catch((error) => {
+                    console.error('Error checking upload permission:', error);
+                    setIsLoading(false);
+                    alert('Error processing upload. Please try again.');
+                });
             });
         }).catch((error) => {
             console.error('Upload failed', error);
