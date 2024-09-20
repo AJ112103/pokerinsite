@@ -50,7 +50,12 @@ const GameAnalysis = () => {
   
 
   const handleHandInsightsClick = () => {
-    navigate('/hand-insights');
+    if (selectedSession) {
+      console.log("here");
+      navigate(`/hand-insights/${selectedSession.id}`);
+    } else {
+      console.error('No session selected');
+    }
   };
 
   return (
