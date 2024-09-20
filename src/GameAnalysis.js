@@ -1,53 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import './GameAnalysis.css';
 import { useNavigate } from 'react-router-dom';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const GameAnalysis = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Sample data mimicking backend response
-    const sampleData = [
-      {
-        id: 1,
-        name: 'Online Session #1',
-        date: 'July 24th, 2024',
-        netScore: -200,
-        handsAnalyzed: 750,
-        handsWon: 180,
-        biggestFish: 'Player 5',
-        biggestShark: 'Player 2',
-        biggestNit: 'Player 7'
-      },
-      {
-        id: 2,
-        name: 'Online Session #2',
-        date: 'August 3rd, 2024',
-        netScore: 573,
-        handsAnalyzed: 892,
-        handsWon: 204,
-        biggestFish: 'Player 3',
-        biggestShark: 'Player 2',
-        biggestNit: 'Player 8'
-      },
-      {
-        id: 3,
-        name: 'Offline Session #1',
-        date: 'August 10th, 2024',
-        netScore: 1200,
-        handsAnalyzed: 320,
-        handsWon: 98,
-        biggestFish: 'Player 1',
-        biggestShark: 'Player 4',
-        biggestNit: 'Player 6'
-      }
-    ];
+    const functions = getFunctions();
+    const getAllSessionDetails = httpsCallable(functions, 'getAllSessionDetails');
 
-    // Simulating an API call
-    setTimeout(() => {
-      setSessions(sampleData);
-    }, 500);
+    getAllSessionDetails().then((result) => {
+      console.log(result);
+      const sessionsFromApi = result.data.details.map(session => ({
+        id: session.sessionId,
+        name: session.sessionName,
+        date: session.date,
+        netScore: session.yourNet,
+        handsAnalyzed: session.glance.hands_analyzed,
+        handsWon: session.glance.hands_won,
+        biggestFish: session.glance.fish,
+        biggestShark: session.glance.shark,
+        biggestNit: session.glance.nit
+      }));
+      setSessions(sessionsFromApi);
+    }).catch((error) => {
+      console.error("Failed to fetch session details:", error);
+      // Handle errors or set default data here if necessary
+    });
   }, []);
 
   const handleSessionClick = (session) => {
@@ -58,11 +40,14 @@ const GameAnalysis = () => {
     setSelectedSession(null);
   };
 
-  const navigate = useNavigate();
-
   const handlePlayerInsightsClick = () => {
-    navigate('/player-insights');
+    if (selectedSession) {
+      navigate(`/player-insights/${selectedSession.id}`);
+    } else {
+      console.error('No session selected');
+    }
   };
+  
 
   const handleHandInsightsClick = () => {
     navigate('/hand-insights');
@@ -83,7 +68,7 @@ const GameAnalysis = () => {
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id} onClick={() => handleSessionClick(session)}>
-                <td class="underline">{session.name}</td>
+                <td className="underline">{session.name}</td>
                 <td>{session.date}</td>
                 <td style={{ color: session.netScore >= 0 ? 'green' : 'red' }}>
                   {session.netScore >= 0 ? '+' : ''}{session.netScore}
@@ -130,8 +115,8 @@ const GameAnalysis = () => {
               </div>
             </div>
             <div className="button-group">
-            <button onClick={handlePlayerInsightsClick}>Player Insights</button>
-            <button onClick={handleHandInsightsClick}>Hand Insights</button>
+              <button onClick={handlePlayerInsightsClick}>Player Insights</button>
+              <button onClick={handleHandInsightsClick}>Hand Insights</button>
             </div>
           </div>
         </div>

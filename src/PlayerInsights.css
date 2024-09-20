@@ -3,13 +3,25 @@
 /* Player Insights Specific Styles */
 .player-insights-container {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 10vh auto; /* Adjusted top margin to push the container down */
   padding: 20px;
   text-align: center;
   font-family: Arial, sans-serif;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;  /* Align items to the top */
+  height: 100vh;
+  padding-top: 20vh;  /* Adjust this value to move the card up */
+  background-color: #f5f5f5;
 }
 
 .player-insights-container h2 {
@@ -64,3 +76,33 @@
 .table-player{
   border-radius: 10px;
 }
+
+.player-insights-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+}
+
+.arrow-btn {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #000; /* Adjust the color based on your design */
+}
+
+.arrow-btn:focus {
+  outline: none;
+}
+
+.name-container {
+  width: 14ch; /* ch unit corresponds to the width of the "0" character */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Optional: to handle names longer than 14 characters */
+}
+

@@ -173,7 +173,7 @@ function Home() {
         score: totalNet
       }).then((result) => {
         if (logFile) {
-          logParser();
+          logParser(result.data.sessionName, currentDate, totalNet);
         }
         else {
           setIsLoading(false);
@@ -207,44 +207,55 @@ function Home() {
     return `${month} ${day}${daySuffix(day)}, ${year}`;
 };
  
-  function logParser() {  
-    if (logFile) {
-        const storage = getStorage();
-        const storageRef = ref(storage, 'uploads/' + logFile.name);
-        console.log(selectedPlayers.net);
-        console.log(playersData);
+function logParser(sessionName, currentDate, totalNet) {  
+  if (logFile) {
+      const storage = getStorage();
+      const storageRef = ref(storage, 'uploads/' + logFile.name);
+      console.log(selectedPlayers);
+      console.log(playersData);
+      console.log("here");
 
-        uploadBytes(storageRef, logFile).then((snapshot) => {
+      uploadBytes(storageRef, logFile).then((snapshot) => {
+          getDownloadURL(snapshot.ref).then((downloadURL) => {
+              console.log('File available at', downloadURL);
+              console.log(sessionName);
 
-            getDownloadURL(snapshot.ref).then((downloadURL) => {
-                console.log('File available at', downloadURL);
-                
+              const functions = getFunctions();
+              const storeHardcodedData = httpsCallable(functions, 'storeHardcodedData');
 
-                const functions = getFunctions();
-                const storeHardcodedData = httpsCallable(functions, 'storeHardcodedData');
+              // Prepare the data object to pass to the cloud function
+              const dataToSend = {
+                  link: downloadURL,
+                  date: currentDate,
+                  sessionName: sessionName,
+                  selectedPlayers: selectedPlayers,
+                  playersData: playersData,
+                  yourNet: totalNet
+              };
 
-                storeHardcodedData().then((result) => {
-                    if (result.data) {
-                      console.log("YAY");
-                    } else {
-                      console.log("BOO");
-                    }
-                }).catch((error) => {
-                    console.error('Error checking upload permission:', error);
-                    setIsLoading(false);
-                    alert('Error processing upload. Please try again.');
-                });
-            });
-        }).catch((error) => {
-            console.error('Upload failed', error);
-        });
-    } else {
-        setIsUploaded(false);
-    }
+              storeHardcodedData(dataToSend).then((result) => {
+                  if (result.data) {
+                    console.log("YAY");
+                  } else {
+                    console.log("BOO");
+                  }
+              }).catch((error) => {
+                  console.error('Error checking upload permission:', error);
+                  setIsLoading(false);
+                  alert('Error processing upload. Please try again.');
+              });
+          });
+      }).catch((error) => {
+          console.error('Upload failed', error);
+      });
+  } else {
+      setIsUploaded(false);
   }
-    const closePopup = () => {
-      setShowSubscriptionPopup(false);
-    };
+}
+    
+  const closePopup = () => {
+    setShowSubscriptionPopup(false);
+  };
 
 
   if (isLoading)

@@ -85,7 +85,7 @@ function App() {
           } 
         />
         <Route 
-          path="/player-insights" 
+          path="/player-insights/:sessionId" 
           element={
               <PlayerInsights />
           } 

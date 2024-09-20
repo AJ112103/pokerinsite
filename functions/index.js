@@ -362,6 +362,8 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
     }
 
+    console.log(data);
+
     // Retrieve the user ID from the authentication context
     const userId = context.auth.uid;
 
@@ -1280,7 +1282,10 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
     const gameRef = userDocRef.collection('games').doc(gameId);
     await gameRef.set({
         glance: resultData.Glance,
-        players: resultData.Player
+        players: resultData.Player,
+        yourNet: data.yourNet,
+        sessionName: data.sessionName,
+        sessionDate: data.date
     });
 
     // Store hands information
@@ -1289,4 +1294,100 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
     });
 
     return { success: true, gameId: gameId }; // Modified to return correctly in a callable function
+});
+
+exports.getAllSessionDetails = functions.https.onCall(async (data, context) => {
+    // Ensure the user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const userId = context.auth.uid;
+    const userDocRef = admin.firestore().collection('userData').doc(userId);
+
+    try {
+        const gamesSnapshot = await userDocRef.collection('games').get();
+        
+        if (gamesSnapshot.empty) {
+            return { success: true, message: "No sessions available.", details: [] };
+        }
+
+        const sessionDetails = gamesSnapshot.docs.map(doc => ({
+            sessionId: doc.id,
+            sessionName: doc.data().sessionName,
+            yourNet: doc.data().yourNet,
+            date: doc.data().sessionDate,
+            glance: doc.data().glance
+        }));
+
+        return { success: true, details: sessionDetails };
+    } catch (error) {
+        console.error('Error fetching session details:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching session details.');
+    }
+});
+
+exports.getHandsByGameId = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    if (!data.gameId) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "gameId".');
+    }
+
+    const userId = context.auth.uid;
+    const gameRef = admin.firestore().collection('userData').doc(userId).collection('games').doc(data.gameId);
+
+    try {
+        const handsSnapshot = await gameRef.collection('hands').get();
+
+        if (handsSnapshot.empty) {
+            return { success: true, message: "No hands available for this game.", hands: [] };
+        }
+
+        const handsDetails = handsSnapshot.docs.map(doc => ({
+            handId: doc.id,
+            ...doc.data()
+        }));
+
+        return { success: true, hands: handsDetails };
+    } catch (error) {
+        console.error('Error fetching hands:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching hands.');
+    }
+});
+
+exports.getPlayerDetails = functions.https.onCall(async (data, context) => {
+    // Check for authentication
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    // Validate the provided gameId
+    if (!data.gameId) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid gameId.');
+    }
+
+    const userId = context.auth.uid;
+    const gameDocRef = admin.firestore()
+                             .collection('userData')
+                             .doc(userId)
+                             .collection('games')
+                             .doc(data.gameId);
+
+    try {
+        const gameSnapshot = await gameDocRef.get();
+        
+        if (!gameSnapshot.exists) {
+            return { success: false, message: "Game not found." };
+        }
+
+        const playersData = gameSnapshot.data().players;
+
+        return { success: true, players: playersData };
+    } catch (error) {
+        console.error('Error fetching player details:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching player details.');
+    }
 });
