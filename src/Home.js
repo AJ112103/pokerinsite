@@ -211,9 +211,8 @@ function logParser(sessionName, currentDate, totalNet) {
   if (logFile) {
       const storage = getStorage();
       const storageRef = ref(storage, 'uploads/' + logFile.name);
-      console.log(selectedPlayers);
-      console.log(playersData);
-      console.log("here");
+
+      const selectedPlayersArray = Object.keys(selectedPlayers).filter(player => selectedPlayers[player]);
 
       uploadBytes(storageRef, logFile).then((snapshot) => {
           getDownloadURL(snapshot.ref).then((downloadURL) => {
@@ -228,7 +227,7 @@ function logParser(sessionName, currentDate, totalNet) {
                   link: downloadURL,
                   date: currentDate,
                   sessionName: sessionName,
-                  selectedPlayers: selectedPlayers,
+                  selectedPlayers: selectedPlayersArray,
                   playersData: playersData,
                   yourNet: totalNet
               };

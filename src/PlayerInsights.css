@@ -100,7 +100,7 @@
 }
 
 .name-container {
-  width: 14ch; /* ch unit corresponds to the width of the "0" character */
+  width: 20ch; /* ch unit corresponds to the width of the "0" character */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis; /* Optional: to handle names longer than 14 characters */
