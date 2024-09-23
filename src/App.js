@@ -79,13 +79,13 @@ function App() {
               <User />}  
         /> 
         <Route 
-          path="/hand-insights" 
+          path="/hand-insights/:sessionId" 
           element={
               <HandInsights />
           } 
         />
         <Route 
-          path="/player-insights" 
+          path="/player-insights/:sessionId" 
           element={
               <PlayerInsights />
           } 
@@ -103,13 +103,7 @@ function App() {
           } 
         />
         <Route 
-          path="/hand-insights" 
-          element={
-              <HandInsights />
-          } 
-        />
-        <Route 
-          path="/hand-insights/:handNumber" 
+          path="/hand-insights/:sessionId/:handNumber" 
           element={
               <SpecificHandInsights 
               />}

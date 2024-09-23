@@ -1,58 +1,60 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import '@fortawesome/fontawesome-free/css/all.css';
 import './PlayerInsights.css';
 
 const PlayerInsights = () => {
-  const [playerData, setPlayerData] = useState({});
+  const { sessionId } = useParams();
+  const [players, setPlayers] = useState([]);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
   useEffect(() => {
-    // Sample data mimicking backend response
-    const sampleData = {
-      netScore: 150,
-      handsPlayed: 300,
-      amountWon: 1000,
-      amountLost: 850,
-      flopsSeen: '50%',
-      turnsSeen: '40%',
-      riversSeen: '30%',
-      handsWon: '20%'
+    const fetchPlayersData = async () => {
+      const functions = getFunctions();
+      const getPlayerData = httpsCallable(functions, 'getPlayerDetails'); // Replace 'getPlayerDetails' with your actual function name
+
+      try {
+        const response = await getPlayerData({ gameId: sessionId });
+        if (response.data && response.data.players) {
+          setPlayers(Object.entries(response.data.players)); // Store players as array of [key, value] pairs
+          setCurrentPlayerIndex(0); // Start with the first player
+        }
+      } catch (error) {
+        console.error('Error fetching player data:', error);
+      }
     };
 
-    // Simulating an API call
-    setTimeout(() => {
-      setPlayerData(sampleData);
-    }, 500);
-  }, []);
+    if (sessionId) {
+      fetchPlayersData();
+    }
+  }, [sessionId]);
 
-   // useEffect(() => {
-  //   fetchPlayerData();
-  // }, []);
+  const handleNextPlayer = () => {
+    setCurrentPlayerIndex((prevIndex) => (prevIndex + 1) % players.length);
+  };
 
-  // const fetchPlayerData = async () => {
-  //   try {
-  //     const functions = getFunctions();
-  //     const getPlayerData = httpsCallable(functions, 'getPlayerData');
-  //     const result = await getPlayerData();
-  //     setPlayerData(result.data.entries.map(entry => ({
-  //           netScore: entry.netScore,
-            // handsPlayed: entry.,
-            // amountWon: 1000,
-            // amountLost: 850,
-            // flopsSeen: '50%',
-            // turnsSeen: '40%',
-            // riversSeen: '30%',
-            // handsWon: '20%'
-  //     })));
-  //   } catch (error) {
-  //     console.error('Error fetching Hand data:', error);
-  //   }
-  // };
-  
+  const handlePreviousPlayer = () => {
+    setCurrentPlayerIndex((prevIndex) => (prevIndex - 1 + players.length) % players.length);
+  };
+
+  if (!players.length) {
+    return <div>Loading player data...</div>;
+  }
+
+  const [playerName, playerData] = players[currentPlayerIndex];
 
   return (
     <div className="player-insights-container">
-      <h2>Player 1</h2>
+      <div className="navigation">
+        <button onClick={handlePreviousPlayer} className="arrow-btn"><i className="fas fa-chevron-left"></i></button>
+        <div className="name-container">
+          <h2>{playerName}</h2>
+        </div>
+        <button onClick={handleNextPlayer} className="arrow-btn"><i className="fas fa-chevron-right"></i></button>
+      </div>
       <h3>Player Insights</h3>
-      <table class="table-player">
+      <table className="table-player">
         <thead>
           <tr>
             <th>Net Score</th>
@@ -63,16 +65,16 @@ const PlayerInsights = () => {
         </thead>
         <tbody>
           <tr>
-            <td className={playerData.netScore >= 0 ? 'positive' : 'negative'}>
-              {playerData.netScore}
+            <td className={playerData.netscore >= 0 ? 'positive' : 'negative'}>
+              {playerData.netscore}
             </td>
-            <td>{playerData.handsPlayed}</td>
-            <td>{playerData.amountWon}</td>
-            <td>{playerData.amountLost}</td>
+            <td>{playerData.hands_played}</td>
+            <td>{playerData.amount_won}</td>
+            <td>{playerData.amount_lost}</td>
           </tr>
         </tbody>
       </table>
-      <table class="table-player">
+      <table className="table-player">
         <thead>
           <tr>
             <th>% of Flops Seen</th>
@@ -83,10 +85,10 @@ const PlayerInsights = () => {
         </thead>
         <tbody>
           <tr>
-            <td>{playerData.flopsSeen}</td>
-            <td>{playerData.turnsSeen}</td>
-            <td>{playerData.riversSeen}</td>
-            <td>{playerData.handsWon}</td>
+            <td>{Math.round(playerData.flops / playerData.hands_played * 100)}%</td>
+            <td>{Math.round(playerData.turns / playerData.hands_played * 100)}%</td>
+            <td>{Math.round(playerData.rivers / playerData.hands_played * 100)}%</td>
+            <td>{Math.round(playerData.hands_won / playerData.hands_played * 100)}%</td>
           </tr>
         </tbody>
       </table>

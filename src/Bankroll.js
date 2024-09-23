@@ -95,12 +95,12 @@ function Bankroll() {
   };
 
   const formatBankrollDisplay = (value) => {
-    if (value >= 0){
-      return `$${value}`
+    if (value >= 0) {
+      return `$${value}`;
     } else {
-      return `-$${Math.abs(value)}`
+      return `-$${Math.abs(value)}`;
     }
-  }
+  };
 
   async function saveBankroll(sessionData) {
     const functions = getFunctions();

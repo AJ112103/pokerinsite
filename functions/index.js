@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const functions = require('firebase-functions');
 const stripe = require('stripe')(functions.config().stripe.secret);
+const axios = require('axios');
 
 // Example function using the Stripe secret
 exports.createStripeCustomer = functions.https.onCall(async (data, context) => {
@@ -357,3 +358,148 @@ exports.deleteBankrollEntryAndUpdateScore = functions.https.onCall(async (data, 
     }
 });
 
+exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    // Log the received data for debugging
+    console.log('Received data:', data);
+
+    // Retrieve the user ID from the authentication context
+    const userId = context.auth.uid;
+    const userDocRef = admin.firestore().collection('userData').doc(userId);
+    const gameId = userDocRef.collection('games').doc().id;
+
+    // Destructure the necessary data from the input
+    const { link, selectedPlayers } = data;
+
+    // Call the Lambda function with the link and selectedPlayers
+    let resultData;
+    try {
+        const response = await axios.post('https://fssn6tejrwpxyggox6vtdo4wca0fvmyv.lambda-url.us-west-1.on.aws/', {
+            link: link,
+            names: selectedPlayers
+        });
+
+        resultData = response.data.body ? JSON.parse(response.data.body) : response.data;
+        console.log('Lambda response:', resultData);
+
+    } catch (error) {
+        console.error('Error calling Lambda function:', error);
+        throw new functions.https.HttpsError('unknown', 'Error processing data with Lambda function');
+    }
+
+    // Store data in Firestore
+    const gameRef = userDocRef.collection('games').doc(gameId);
+    await gameRef.set({
+        glance: resultData.Glance,
+        players: resultData.Player,
+        yourNet: data.yourNet || 0,  // Default to 0 if not provided
+        sessionName: data.sessionName || 'Unnamed Session',  // Default if sessionName is missing
+        sessionDate: data.date || new Date().toISOString()  // Default to current date if not provided
+    });
+
+    // Store hands information in Firestore
+    resultData.Hands.forEach(async (hand, index) => {
+        await gameRef.collection('hands').doc(`hand_${index + 1}`).set(hand);
+    });
+
+    return { success: true, gameId: gameId }; // Return the gameId and success status
+});
+
+exports.getAllSessionDetails = functions.https.onCall(async (data, context) => {
+    // Ensure the user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const userId = context.auth.uid;
+    const userDocRef = admin.firestore().collection('userData').doc(userId);
+
+    try {
+        const gamesSnapshot = await userDocRef.collection('games').get();
+        
+        if (gamesSnapshot.empty) {
+            return { success: true, message: "No sessions available.", details: [] };
+        }
+
+        const sessionDetails = gamesSnapshot.docs.map(doc => ({
+            sessionId: doc.id,
+            sessionName: doc.data().sessionName,
+            yourNet: doc.data().yourNet,
+            date: doc.data().sessionDate,
+            glance: doc.data().glance
+        }));
+
+        return { success: true, details: sessionDetails };
+    } catch (error) {
+        console.error('Error fetching session details:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching session details.');
+    }
+});
+
+exports.getHandsByGameId = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    if (!data.gameId) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "gameId".');
+    }
+
+    const userId = context.auth.uid;
+    const gameRef = admin.firestore().collection('userData').doc(userId).collection('games').doc(data.gameId);
+
+    try {
+        const handsSnapshot = await gameRef.collection('hands').get();
+
+        if (handsSnapshot.empty) {
+            return { success: true, message: "No hands available for this game.", hands: [] };
+        }
+
+        const handsDetails = handsSnapshot.docs.map(doc => ({
+            handId: doc.id,
+            ...doc.data()
+        }));
+
+        return { success: true, hands: handsDetails };
+    } catch (error) {
+        console.error('Error fetching hands:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching hands.');
+    }
+});
+
+exports.getPlayerDetails = functions.https.onCall(async (data, context) => {
+    // Check for authentication
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    // Validate the provided gameId
+    if (!data.gameId) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid gameId.');
+    }
+
+    const userId = context.auth.uid;
+    const gameDocRef = admin.firestore()
+                             .collection('userData')
+                             .doc(userId)
+                             .collection('games')
+                             .doc(data.gameId);
+
+    try {
+        const gameSnapshot = await gameDocRef.get();
+        
+        if (!gameSnapshot.exists) {
+            return { success: false, message: "Game not found." };
+        }
+
+        const playersData = gameSnapshot.data().players;
+
+        return { success: true, players: playersData };
+    } catch (error) {
+        console.error('Error fetching player details:', error);
+        throw new functions.https.HttpsError('unknown', 'An error occurred while fetching player details.');
+    }
+});
