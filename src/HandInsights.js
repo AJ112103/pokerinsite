@@ -23,7 +23,7 @@ const HandInsights = () => {
   const [filteredHandData, setFilteredHandData] = useState([]);
   const navigate = useNavigate();
   const handleRowClick = (handNumber) => {
-      navigate(`/hand-insights/${handNumber}`);
+      navigate(`/hand-insights/${handNumber}`); //for this part you will need to add the session id in the route, get this form use params
     };
 
   useEffect(() => {

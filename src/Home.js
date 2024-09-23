@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Home.css';
 import Papa from 'papaparse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,9 +30,9 @@ function Home() {
   };
 
   const truncateName = (name) => {
-    const maxLength = 7;  // Set max length for the display name
+    const maxLength = 7;
     if (name.length > maxLength) {
-      return `${name.substring(0, maxLength)}...`; // Truncate and add ellipsis
+      return `${name.substring(0, maxLength)}...`;
     }
     return name;
   };
@@ -173,7 +173,7 @@ function Home() {
         score: totalNet
       }).then((result) => {
         if (logFile) {
-          logParser();
+          logParser(result.data.sessionName, currentDate, totalNet);
         }
         else {
           setIsLoading(false);
@@ -204,33 +204,57 @@ function Home() {
       }
     };
 
-    // Construct the date manually to avoid locale-specific issues with replace
     return `${month} ${day}${daySuffix(day)}, ${year}`;
 };
  
-  function logParser() {  
-    if (logFile) {
-        const storage = getStorage();
-        const storageRef = ref(storage, 'uploads/' + logFile.name);
+function logParser(sessionName, currentDate, totalNet) {  
+  if (logFile) {
+      const storage = getStorage();
+      const storageRef = ref(storage, 'uploads/' + logFile.name);
 
-        uploadBytes(storageRef, logFile).then((snapshot) => {
+      const selectedPlayersArray = Object.keys(selectedPlayers).filter(player => selectedPlayers[player]);
 
-            getDownloadURL(snapshot.ref).then((downloadURL) => {
-                console.log('File available at', downloadURL);
+      uploadBytes(storageRef, logFile).then((snapshot) => {
+          getDownloadURL(snapshot.ref).then((downloadURL) => {
+              console.log('File available at', downloadURL);
+              console.log(sessionName);
 
-                // Optionally, send this URL to your Lambda function
-                // sendToLambda(downloadURL);
-            });
-        }).catch((error) => {
-            console.error('Upload failed', error);
-        });
-    } else {
-        setIsUploaded(false);
-    }
+              const functions = getFunctions();
+              const storeHardcodedData = httpsCallable(functions, 'storeHardcodedData');
+
+              // Prepare the data object to pass to the cloud function
+              const dataToSend = {
+                  link: downloadURL,
+                  date: currentDate,
+                  sessionName: sessionName,
+                  selectedPlayers: selectedPlayersArray,
+                  playersData: playersData,
+                  yourNet: totalNet
+              };
+
+              storeHardcodedData(dataToSend).then((result) => {
+                  if (result.data) {
+                    console.log("YAY");
+                  } else {
+                    console.log("BOO");
+                  }
+              }).catch((error) => {
+                  console.error('Error checking upload permission:', error);
+                  setIsLoading(false);
+                  alert('Error processing upload. Please try again.');
+              });
+          });
+      }).catch((error) => {
+          console.error('Upload failed', error);
+      });
+  } else {
+      setIsUploaded(false);
   }
-    const closePopup = () => {
-      setShowSubscriptionPopup(false);
-    };
+}
+    
+  const closePopup = () => {
+    setShowSubscriptionPopup(false);
+  };
 
 
   if (isLoading)
