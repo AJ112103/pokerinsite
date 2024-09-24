@@ -4,6 +4,7 @@ import { parse } from 'date-fns';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { v4 as uuidv4 } from 'uuid';
 
 function Bankroll() {
   const [sessions, setSessions] = useState([]);
@@ -24,8 +25,18 @@ function Bankroll() {
   const [netScore, setNetScore] = useState(0);
 
   useEffect(() => {
-    fetchBankrollData();
+    const cachedSessions = JSON.parse(localStorage.getItem('bankrollSessions')) || [];
+    if (cachedSessions.length > 0) {
+      setSessions(cachedSessions);
+      calculateNetScore(cachedSessions);
+    } else {
+      fetchBankrollData();
+    }
   }, []);
+
+  function generateCustomId() {
+    return uuidv4().replace(/-/g, '').slice(0, 20); // Trim or format as needed
+  }
 
   const fetchBankrollData = async () => {
     try {
@@ -35,17 +46,57 @@ function Bankroll() {
       if (result.data.status === "not-initialized") {
         setNetScore(0);
       } else {
-        setNetScore(result.data.netScore);
-        setSessions(result.data.entries.map(entry => ({
+        const fetchedSessions = result.data.entries.map(entry => ({
           id: entry.id,
           session: entry.name,
           date: entry.date,
           score: entry.score
-        })));
+        }));
+        setSessions(fetchedSessions);
+        localStorage.setItem('bankrollSessions', JSON.stringify(fetchedSessions)); // Save to Local Storage
+        calculateNetScore(fetchedSessions);
       }
     } catch (error) {
       console.error('Error fetching bankroll data:', error);
     }
+  };
+
+  const calculateNetScore = (sessionList) => {
+    const score = sessionList.reduce((total, session) => total + session.score, 0);
+    setNetScore(score);
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+
+    let sessionName = '';
+    if (sessionType === 'custom') {
+      sessionName = customSession;
+    } else {
+      sessionName = `${sessionType === 'online' ? 'Online' : 'Offline'} Session #${sessionNumber}`;
+    }
+
+    const sessionData = {
+      id: generateCustomId(),
+      session: sessionName,
+      date: formatDate(selectedDate),
+      score: parseFloat(newSession.score),
+    };
+
+
+    const updatedSessions = [...sessions, sessionData];
+    setSessions(updatedSessions);
+    localStorage.setItem('bankrollSessions', JSON.stringify(updatedSessions)); // Update Local Storage
+    calculateNetScore(updatedSessions);
+
+    saveBankroll(sessionData);
+
+    setIsModalOpen(false);
+    setNewSession({ session: '', date: '', score: '' });
+    setSelectedDate('');
+    setSessionType('online');
+    setSessionNumber('');
+    setCustomSession('');
   };
 
   const formatDate = (date) => {
@@ -66,52 +117,16 @@ function Bankroll() {
     return formattedDate.replace(day, `${day}${daySuffix(day)}`);
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-
-    let sessionName = '';
-    if (sessionType === 'custom') {
-      sessionName = customSession;
-    } else {
-      sessionName = `${sessionType === 'online' ? 'Online' : 'Offline'} Session #${sessionNumber}`;
-    }
-
-    const sessionData = {
-      ...newSession,
-      session: sessionName,
-      date: formatDate(selectedDate),
-      score: parseFloat(newSession.score),
-    };
-
-    setSessions([...sessions, sessionData]);
-    saveBankroll(sessionData);
-
-    setIsModalOpen(false);
-    setNewSession({ session: '', date: '', score: '' });
-    setSelectedDate('');
-    setSessionType('online');
-    setSessionNumber('');
-    setCustomSession('');
-  };
-
-  const formatBankrollDisplay = (value) => {
-    if (value >= 0) {
-      return `$${value}`;
-    } else {
-      return `-$${Math.abs(value)}`;
-    }
-  };
-
   async function saveBankroll(sessionData) {
     const functions = getFunctions();
     const addBankrollEntryAndUpdateScore = httpsCallable(functions, 'addBankrollEntryAndUpdateScore');
     addBankrollEntryAndUpdateScore({
+      id: sessionData.id,
       sessionName: sessionData.session,
       date: sessionData.date,
       score: sessionData.score
     }).then((result) => {
-      console.log('Updated Net Score:', result.data.netScore);
-      setNetScore(result.data.netScore);
+      console.log('Updated Net Score:', result.data);
     }).catch((error) => {
       console.error('Error updating bankroll:', error);
     });
@@ -154,22 +169,23 @@ function Bankroll() {
     setSessions(sortedSessions);
   };
 
-  const handleDelete = async (sessionId) => {
+  const formatBankrollDisplay = (value) => {
+    return value >= 0 ? `$${value}` : `-$${Math.abs(value)}`;
+  }
 
-    if (!sessionId)
-      {
-        alert("Session still processing, try deleting in a few seconds");
-      }
-    else
-    {
-      setSessions(sessions.filter(session => session.id !== sessionId));
-    
+  const handleDelete = async (sessionId) => {
+    if (!sessionId) {
+      alert("Session still processing, try deleting in a few seconds");
+    } else {
+      const updatedSessions = sessions.filter(session => session.id !== sessionId);
+      setSessions(updatedSessions);
+      localStorage.setItem('bankrollSessions', JSON.stringify(updatedSessions)); // Update Local Storage
+      calculateNetScore(updatedSessions);
+
       try {
         const functions = getFunctions();
         const deleteBankrollEntryAndUpdateScore = httpsCallable(functions, 'deleteBankrollEntryAndUpdateScore');
-        const result = await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
-        console.log('Updated Net Score:', result.data.netScore);
-        setNetScore(result.data.netScore);
+        await deleteBankrollEntryAndUpdateScore({ entryId: sessionId });
       } catch (error) {
         console.error('Error deleting bankroll entry:', error);
       }
@@ -281,4 +297,4 @@ function Bankroll() {
   );
 }
 
-export default Bankroll;
+export default Bankroll;;

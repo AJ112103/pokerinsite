@@ -214,7 +214,7 @@ exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, con
     }
 
     const userId = context.auth.uid;
-    const { sessionName, date, score } = data;
+    const { sessionName, date, score, id } = data; // Include 'id' from the request
 
     if (!date || typeof score !== 'number') {
         throw new functions.https.HttpsError('invalid-argument', 'Score must be a number and date must be provided.');
@@ -244,8 +244,8 @@ exports.addBankrollEntryAndUpdateScore = functions.https.onCall(async (data, con
             transaction.set(settingsRef, { counter: counter + 1 }, { merge: true });
             transaction.set(bankrollRef, { netScore }, { merge: true });
 
-            // Create a new bankroll entry
-            const entryRef = entriesRef.doc();
+            // Use the provided 'id' if available, otherwise create a new document
+            const entryRef = id ? entriesRef.doc(id) : entriesRef.doc();
             transaction.set(entryRef, {
                 name: newName,
                 date,
