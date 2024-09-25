@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './GameAnalysis.css';
+import RouletteLoader from './RouletteLoader';
 import { useNavigate } from 'react-router-dom';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -7,13 +8,15 @@ const GameAnalysis = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const functions = getFunctions();
     const getAllSessionDetails = httpsCallable(functions, 'getAllSessionDetails');
 
     getAllSessionDetails().then((result) => {
-      console.log(result);
+      setIsLoading(false);
       const sessionsFromApi = result.data.details.map(session => ({
         id: session.sessionId,
         name: session.sessionName,
@@ -57,6 +60,22 @@ const GameAnalysis = () => {
       console.error('No session selected');
     }
   };
+
+  if (isLoading)
+    {
+      return (
+        <div
+          className="game-analysis-container"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <RouletteLoader />
+        </div>
+      )
+    }
 
   return (
     <div className="game-analysis-container">

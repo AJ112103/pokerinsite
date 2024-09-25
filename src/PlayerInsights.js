@@ -41,7 +41,13 @@ const PlayerInsights = () => {
 
   if (!players.length) {
     return (
-      <div className="player-insights-container">
+      <div className="player-insights-container"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <RouletteLoader />
       </div>
     );

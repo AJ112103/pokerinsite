@@ -229,12 +229,15 @@ function logParser(sessionName, currentDate, totalNet) {
                   sessionName: sessionName,
                   selectedPlayers: selectedPlayersArray,
                   playersData: playersData,
-                  yourNet: totalNet
+                  yourNet: totalNet,
+                  includeCents: includeCents
               };
 
               storeHardcodedData(dataToSend).then((result) => {
                   if (result.data) {
-                    console.log("YAY");
+                    setIsLoading(false);
+                    setIsSuccess(true);
+                    setTimeout(() => resetData(), 2000); 
                   } else {
                     console.log("BOO");
                   }
@@ -260,7 +263,7 @@ function logParser(sessionName, currentDate, totalNet) {
   if (isLoading)
     {
       return (
-        <div className="container">
+        <div className="home-container">
           <div className="loading-card">
             <RouletteLoader />
           </div>
@@ -271,7 +274,7 @@ function logParser(sessionName, currentDate, totalNet) {
     if (isSuccess)
       {
         return (
-          <div className="container">
+          <div className="home-container">
             <div className="loading-card">
               <h3>Success!</h3>
             </div>
@@ -280,7 +283,7 @@ function logParser(sessionName, currentDate, totalNet) {
       }
 
   return (
-    <div className="container">
+    <div className="home-container">
       {showSubscriptionPopup && <SubscriptionPopup uploadsLeft={uploadsLeft} onClose={closePopup} />}
       <div className="card">
         {!isUploaded ? (

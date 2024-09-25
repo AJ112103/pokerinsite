@@ -1,5 +1,6 @@
 .game-analysis-container {
     max-width: 800px;
+    height: 400px;
     margin: 10vh auto; /* Adjusted top margin to push the container down */
     padding: 20px;
     text-align: center;

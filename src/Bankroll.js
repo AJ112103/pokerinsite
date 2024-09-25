@@ -29,6 +29,7 @@ function Bankroll() {
     if (cachedSessions.length > 0) {
       setSessions(cachedSessions);
       calculateNetScore(cachedSessions);
+      fetchBankrollData();
     } else {
       fetchBankrollData();
     }

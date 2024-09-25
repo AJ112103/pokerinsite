@@ -1,8 +1,7 @@
-.container {
+.home-container {
   display: flex;
   justify-content: center;
   align-items: flex-start;  /* Align items to the top */
-  height: 100vh;
   padding-top: 20vh;  /* Adjust this value to move the card up */
   background-color: #f5f5f5;
 }
