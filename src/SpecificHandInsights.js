@@ -11,6 +11,7 @@ const SpecificHandInsights = () => {
   const { handNumber } = useParams();
   const navigate = useNavigate();
   const [handData, setHandData] = useState(null);
+  const { sessionId } = useParams();
 
   useEffect(() => {
     // In a real application, you would fetch the specific hand data from your backend
@@ -36,7 +37,7 @@ const SpecificHandInsights = () => {
         <p><strong>Players:</strong> {handData.players.join(', ')}</p>
       </div>
       <div className="action-buttons">
-        <button onClick={() => navigate('/hand-insights')}>Back to Hand Insights</button>
+        <button onClick={() => navigate(`/hand-insights/${sessionId}`)}>Back to Hand Insights</button>
         {/* Add more buttons for additional actions if needed */}
       </div>
     </div>

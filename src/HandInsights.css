@@ -10,16 +10,25 @@
   position: relative;
 }
 
+.hand-insights-table-wrapper {
+  max-height: 70vh; /* Make sure the table doesn't exceed 70% of the viewport height */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
 .hand-insights-container h2,
 .hand-insights-container h3 {
   color: #333;
+}
+
+.hand-insights-container h2 {
+  margin-bottom: 10px; /* Add spacing below the session number */
 }
 
 .table-hand {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin-top: 20px;
+  margin-top: 30px; /* Add space between title and table */
   border: 1px solid #ccc;
   border-radius: 10px;
   text-align: center;
@@ -29,12 +38,21 @@
 .table-hand td {
   padding: 10px;
   text-align: center;
-  border: none;
+  border-bottom: 1px solid #ccc; /* Add this line to make the borders between rows more visible */
 }
 
 .table-hand th {
   background-color: #f5f5f5;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 2px solid #ccc; /* Slightly thicker border for the table header */
+}
+
+.table-hand td {
+  color: #333; /* Ensure text color is consistent */
+}
+
+/* Optional: Make alternating rows have a different background color */
+.table-hand tr:nth-child(even) {
+  background-color: #f9f9f9;
 }
 
 .table-hand tr:last-child td {
@@ -70,7 +88,7 @@
   background-color: white;
   padding: 20px;
   border-radius: 10px;
-  max-width: 400px;
+  max-width: 90%; /* Ensure the modal adjusts for smaller screens */
   max-height: 80%;
   overflow-y: auto;
   text-align: center;
@@ -103,9 +121,13 @@
 .submit-button {
   margin-top: 16px;
   padding: 8px 16px;
-  background-color: gray; /* Green color for submit button */
+  background-color: gray;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.submit-button:hover {
+  background-color: darkgray; /* Darker color on hover for better feedback */
 }
