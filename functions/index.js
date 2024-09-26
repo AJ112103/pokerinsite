@@ -400,14 +400,7 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
             console.log(`Updating netscore for player: ${playerName}`, playerData);
 
             // Assign the netscore from playersData if found, otherwise default to 0
-            if (data.includeCents)
-            {
-                player.netscore = playerData ? playerData.net/100 : 0;  
-            }
-            else
-            {
-                player.netscore = playerData ? playerData.net : 0;
-            }
+            player.netscore = data.includeCents ? (playerData ? playerData.net / 100 : 0) : (playerData ? playerData.net : 0);
         });
     }
 
@@ -421,13 +414,24 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
         sessionDate: data.date || new Date().toISOString()  // Default to current date if not provided
     });
 
-    // Store hands information in Firestore
-    resultData.Hands.forEach(async (hand, index) => {
-        await gameRef.collection('hands').doc(`hand_${index + 1}`).set(hand);
+    // Use a batch write to store hands
+    const batch = admin.firestore().batch();
+    resultData.Hands.forEach((hand, index) => {
+        const handRef = gameRef.collection('hands').doc(`hand_${index + 1}`);
+        batch.set(handRef, hand);
     });
+
+    // Commit the batch
+    try {
+        await batch.commit();
+    } catch (error) {
+        console.error('Error committing batch writes:', error);
+        throw new functions.https.HttpsError('unknown', 'Error storing hand data');
+    }
 
     return { success: true, gameId: gameId }; // Return the gameId and success status
 });
+
 
 
 
