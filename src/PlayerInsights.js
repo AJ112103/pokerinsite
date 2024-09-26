@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import '@fortawesome/fontawesome-free/css/all.css';
 import './PlayerInsights.css';
+import RouletteLoader from './RouletteLoader';
 
 const PlayerInsights = () => {
   const { sessionId } = useParams();
@@ -39,13 +40,24 @@ const PlayerInsights = () => {
   };
 
   if (!players.length) {
-    return <div>Loading player data...</div>;
+    return (
+      <div className="player-insights-container"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <RouletteLoader />
+      </div>
+    );
   }
 
   const [playerName, playerData] = players[currentPlayerIndex];
 
   return (
     <div className="player-insights-container">
+      <h3>Player Insights</h3>
       <div className="navigation">
         <button onClick={handlePreviousPlayer} className="arrow-btn"><i className="fas fa-chevron-left"></i></button>
         <div className="name-container">
@@ -53,7 +65,6 @@ const PlayerInsights = () => {
         </div>
         <button onClick={handleNextPlayer} className="arrow-btn"><i className="fas fa-chevron-right"></i></button>
       </div>
-      <h3>Player Insights</h3>
       <table className="table-player">
         <thead>
           <tr>

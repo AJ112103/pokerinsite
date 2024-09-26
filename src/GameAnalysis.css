@@ -1,11 +1,13 @@
 .game-analysis-container {
     max-width: 800px;
-    margin: 0 auto;
+    height: 400px;
+    margin: 10vh auto; /* Adjusted top margin to push the container down */
     padding: 20px;
     text-align: center;
     font-family: Arial, sans-serif;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
+    background-color: #ffffff;
   }
   
   h2 {

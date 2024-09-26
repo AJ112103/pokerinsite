@@ -3,6 +3,7 @@
 /* Player Insights Specific Styles */
 .player-insights-container {
   max-width: 800px;
+  height: 320px;
   margin: 10vh auto; /* Adjusted top margin to push the container down */
   padding: 20px;
   text-align: center;
@@ -84,6 +85,7 @@
 }
 
 .navigation {
+  margin-top: -20px;
   display: flex;
   align-items: center;
 }

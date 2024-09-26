@@ -9,12 +9,13 @@ const HandInsights = () => {
   const [filteredHandData, setFilteredHandData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [isHandModalOpen, setIsHandModalOpen] = useState(false);
+  const [selectedHandActions, setSelectedHandActions] = useState([]); // Store the actions of the clicked hand
   const [players, setPlayers] = useState([]);
-  const [sessionName, setSessionName] = useState(''); // Initialize sessionName state
+  const [sessionName, setSessionName] = useState('');
   const navigate = useNavigate();
   const { sessionId } = useParams();
 
-  // Fetch the hand data from the Firebase function
   useEffect(() => {
     fetchHandData();
   }, []);
@@ -24,41 +25,32 @@ const HandInsights = () => {
       const functions = getFunctions();
       const getHandsByGameId = httpsCallable(functions, 'getHandsByGameId');
       const result = await getHandsByGameId({ gameId: sessionId });
-  
-      console.log(result);  // Log the full result to check the structure
-  
-      // Safely access hands array from the result
-      const handDataFromApi = result?.data?.hands || [];  // Ensure hands exist, otherwise set it to an empty array
-  
-      // If handData is empty, log a warning or provide default data
+      console.log(result);
+
+      const handDataFromApi = result?.data?.hands || [];
       if (handDataFromApi.length === 0) {
         console.warn('No hand data available for this session.');
       }
-  
-      // Map hand data if it exists
+
       const mappedHandData = handDataFromApi.map(hand => ({
-        handNumber: hand?.number || 0, // Use hand.number directly
+        handNumber: hand?.number || 0,
         yourHand: hand?.cards || 'N/A',
         totalPot: hand?.pot || 0,
         winner: hand?.winners || 'N/A',
-        yourNet: hand?.yourNet || 0, // Directly accessing 'yourNet' as per the object structure
+        yourNet: hand?.yourNet || 0,
         players: hand?.players || [],
+        actions: hand?.actions || [],  // Store the actions of each hand
       }));
-  
-      // Sort the hands by handNumber (ascending order) as the default display
+
       const sortedHandData = mappedHandData.sort((a, b) => a.handNumber - b.handNumber);
-  
       setHandData(sortedHandData);
-      setFilteredHandData(sortedHandData);  // Set the sorted data for rendering
-  
-      // If session number is not available, show the sessionId instead as a fallback
-      setSessionName(sessionId);  // Display sessionId if no other session details are available
-  
+      setFilteredHandData(sortedHandData);
+      setSessionName(sessionId);
     } catch (error) {
       console.error('Error fetching Hand data:', error);
     }
   };
-    
+
   const sortData = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -67,13 +59,9 @@ const HandInsights = () => {
     setSortConfig({ key, direction });
 
     const sortedData = [...filteredHandData].sort((a, b) => {
-      // Handle numeric sorting for the handNumber field
       if (key === 'handNumber') {
-        return direction === 'ascending'
-          ? a.handNumber - b.handNumber  // Ascending sort for numbers
-          : b.handNumber - a.handNumber; // Descending sort for numbers
+        return direction === 'ascending' ? a.handNumber - b.handNumber : b.handNumber - a.handNumber;
       } else {
-        // Fallback for other fields (lexicographical or custom sorting logic)
         if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
         if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
         return 0;
@@ -84,30 +72,22 @@ const HandInsights = () => {
   };
 
   const handleRowClick = (handNumber) => {
-    navigate(`/hand-insights/${sessionId}/${handNumber}`); // Navigate to specific hand insights
+    const clickedHand = handData.find(hand => hand.handNumber === handNumber);
+    if (clickedHand) {
+      setSelectedHandActions(clickedHand.actions); // Set the clicked hand's actions
+      setIsHandModalOpen(true);  // Open the modal
+    }
   };
 
-  // Open and close player filter modal
-  const openPlayerModal = () => {
-    setIsPlayerModalOpen(true);
-  };
-
-  const closePlayerModal = () => {
-    setIsPlayerModalOpen(false);
-  };
-
-  // Filter the hand data by the selected player
-  const filterByPlayer = (player) => {
-    setFilteredHandData(player === 'All' ? handData : handData.filter(hand => hand.winner.includes(player)));
-    closePlayerModal();
+  const closeHandModal = () => {
+    setIsHandModalOpen(false);
   };
 
   return (
     <div className="hand-insights-container">
-      <h2>Online Session #{sessionName}</h2>  {/* Use sessionName instead of sessionId */}
+      <h2>Online Session #{sessionName}</h2>
       <h3>Hand Insights</h3>
-      
-      {/* Scrollable wrapper for the table */}
+
       <div className="hand-insights-table-wrapper">
         <table className="table-hand">
           <thead>
@@ -115,7 +95,7 @@ const HandInsights = () => {
               <th onClick={() => sortData('handNumber')} style={{ cursor: 'pointer' }}>Hand Number</th>
               <th>Your Hand</th>
               <th onClick={() => sortData('totalPot')} style={{ cursor: 'pointer' }}>Total Pot ↕️</th>
-              <th onClick={openPlayerModal} style={{ cursor: 'pointer' }}>Winner</th>
+              <th onClick={() => sortData('winner')} style={{ cursor: 'pointer' }}>Winner</th>
               <th onClick={() => sortData('yourNet')} style={{ cursor: 'pointer' }}>Your Net ↕️</th>
             </tr>
           </thead>
@@ -133,19 +113,21 @@ const HandInsights = () => {
         </table>
       </div>
 
-      {isPlayerModalOpen && (
+      {/* Modal for displaying hand actions */}
+      {isHandModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Select a Player</h2>
-            <ul>
-              <li className="player-item" onClick={() => filterByPlayer('All')}>All</li>
-              {players.map((player, index) => (
-                <li key={index} className="player-item" onClick={() => filterByPlayer(player)}>
-                  {player}
-                </li>
+            <h2>Hand Actions</h2>
+            {/* Display player stacks */}
+            <p className="player-stacks">
+              Events {selectedHandActions[0]?.players?.join(' | ')}
+            </p>
+            <ol className="action-list">
+              {selectedHandActions.map((action, index) => (
+                <li key={index} className="action-item">{action}</li>
               ))}
-            </ul>
-            <button onClick={closePlayerModal} className="submit-button">Close</button>
+            </ol>
+            <button onClick={closeHandModal} className="submit-button">Close</button>
           </div>
         </div>
       )}

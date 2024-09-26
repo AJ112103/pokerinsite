@@ -372,7 +372,7 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
     const gameId = userDocRef.collection('games').doc().id;
 
     // Destructure the necessary data from the input
-    const { link, selectedPlayers } = data;
+    const { link, selectedPlayers, playersData } = data;
 
     // Call the Lambda function with the link and selectedPlayers
     let resultData;
@@ -390,11 +390,32 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('unknown', 'Error processing data with Lambda function');
     }
 
+    // Update players' netscores based on playersData using player names as keys
+    if (resultData.Player && playersData) {
+        Object.keys(resultData.Player).forEach(playerName => {
+            const player = resultData.Player[playerName];
+            const playerData = playersData[playerName]; // Use player name to find the corresponding data
+
+            // Debugging: log the playerName and the found playerData
+            console.log(`Updating netscore for player: ${playerName}`, playerData);
+
+            // Assign the netscore from playersData if found, otherwise default to 0
+            if (data.includeCents)
+            {
+                player.netscore = playerData ? playerData.net/100 : 0;  
+            }
+            else
+            {
+                player.netscore = playerData ? playerData.net : 0;
+            }
+        });
+    }
+
     // Store data in Firestore
     const gameRef = userDocRef.collection('games').doc(gameId);
     await gameRef.set({
         glance: resultData.Glance,
-        players: resultData.Player,
+        players: resultData.Player, // Store the updated players object
         yourNet: data.yourNet || 0,  // Default to 0 if not provided
         sessionName: data.sessionName || 'Unnamed Session',  // Default if sessionName is missing
         sessionDate: data.date || new Date().toISOString()  // Default to current date if not provided
@@ -407,6 +428,9 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
 
     return { success: true, gameId: gameId }; // Return the gameId and success status
 });
+
+
+
 
 exports.getAllSessionDetails = functions.https.onCall(async (data, context) => {
     // Ensure the user is authenticated

@@ -29,6 +29,7 @@ function Bankroll() {
     if (cachedSessions.length > 0) {
       setSessions(cachedSessions);
       calculateNetScore(cachedSessions);
+      fetchBankrollData();
     } else {
       fetchBankrollData();
     }
@@ -63,7 +64,9 @@ function Bankroll() {
 
   const calculateNetScore = (sessionList) => {
     const score = sessionList.reduce((total, session) => total + session.score, 0);
-    setNetScore(score);
+    const roundedScore = Math.round((score + Number.EPSILON) * 100) / 100; // Rounds to the nearest two decimal places
+    console.log(roundedScore);
+    setNetScore(roundedScore);
   };
 
   const handleFormSubmit = (e) => {
