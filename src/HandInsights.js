@@ -37,7 +37,7 @@ const HandInsights = () => {
 
       const mappedHandData = handDataFromApi.map(hand => ({
         handNumber: hand?.number || 0,
-        yourHand: typeof hand?.cards === 'string' ? hand.cards : 'N/A, N/A',
+        yourHand: Array.isArray(hand?.cards) ? hand.cards.join(', ') : 'N/A',
         totalPot: hand?.pot || 0,
         winner: Array.isArray(hand?.winners) ? hand?.winners : ['N/A'],  // Ensure winner is always an array
         yourNet: hand?.yourNet || 0,
