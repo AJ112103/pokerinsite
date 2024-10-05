@@ -33,19 +33,18 @@ const HandInsights = () => {
         console.warn('No hand data available for this session.');
       }
 
-      // Extract unique winners from all hands
       const allWinners = [...new Set(handDataFromApi.flatMap(hand => hand?.winners || []))];
 
       const mappedHandData = handDataFromApi.map(hand => ({
         handNumber: hand?.number || 0,
-        yourHand: (hand?.cards || ['N/A', 'N/A']).join(', '),
+        yourHand: typeof hand?.cards === 'string' ? hand.cards : 'N/A, N/A',
         totalPot: hand?.pot || 0,
-        winner: hand?.winners || 'N/A',
+        winner: Array.isArray(hand?.winners) ? hand?.winners : ['N/A'],  // Ensure winner is always an array
         yourNet: hand?.yourNet || 0,
         players: hand?.players || [],
         actions: hand?.actions || [],
       }));
-
+      
       const sortedHandData = mappedHandData.sort((a, b) => a.handNumber - b.handNumber);
       setHandData(sortedHandData);
       setFilteredHandData(sortedHandData);
