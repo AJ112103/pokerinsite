@@ -59,12 +59,12 @@ const HandInsights = () => {
         actions: hand?.actions || [],
       }));
       
-      
+    
       const sortedHandData = mappedHandData.sort((a, b) => a.handNumber - b.handNumber);
       setHandData(sortedHandData);
       setFilteredHandData(sortedHandData);
       setWinners(allWinners);
-      setSessionName(sessionId);
+      setSessionName(result.data.sessionName);
     } catch (error) {
       console.error('Error fetching Hand data:', error);
     }
@@ -118,7 +118,7 @@ const HandInsights = () => {
 
   return (
     <div className="hand-insights-container">
-      <h2>Online Session #{sessionName}</h2>
+      <h2>{sessionName}</h2>
       <h3>Hand Insights</h3>
 
       <div className="hand-insights-table-wrapper">
