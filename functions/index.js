@@ -3,6 +3,7 @@ admin.initializeApp();
 const functions = require('firebase-functions');
 const stripe = require('stripe')(functions.config().stripe.secret);
 const axios = require('axios');
+const webhookSecret = functions.config().stripe.webhook_secret;
 
 // Example function using the Stripe secret
 exports.createStripeCustomer = functions.https.onCall(async (data, context) => {
@@ -40,12 +41,12 @@ exports.createStripeSession = functions.https.onCall(async (data, context) => {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{
-        price: 'price_1PmKP209evpoqo3sG2EPKm6h',  // Use the price ID for your product on Stripe
+        price: 'price_1PlrGZ09evpoqo3s4rMEcVZ4',  // Use the price ID for your product on Stripe
         quantity: 1
       }],
       mode: 'subscription',  // Change to 'payment' if this is a one-time payment
-      success_url: 'http://localhost:3000/payment-success',  // Make sure to include http:// and the correct port number
-      cancel_url: 'http://localhost:3000/payment-failure',
+      success_url: 'https://www.pokerin.site/payment-success',  // Make sure to include http:// and the correct port number
+      cancel_url: 'https://www.pokerin.site/payment-failure',
     });
 
     return { sessionId: session.url };
@@ -121,7 +122,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
     let event;
     try {
-        event = stripe.webhooks.constructEvent(req.rawBody, sig, "whsec_y6o7gAeUD719hjocZIEIlnspLseTh3mp");
+        event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
     } catch (err) {
         console.error('Webhook signature verification failed.', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);

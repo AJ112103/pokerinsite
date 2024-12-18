@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from "firebase/auth";
+import RouletteLoader from './RouletteLoader';
 
 function User() {
     const navigate = useNavigate();
@@ -51,6 +52,7 @@ function User() {
     const handleSubscribe = async () => {
         const functions = getFunctions();
         const createStripeSession = httpsCallable(functions, 'createStripeSession');
+        setIsLoading(true);
 
         createStripeSession().then(({ data }) => {
             window.location.href = data.sessionId;
@@ -63,9 +65,10 @@ function User() {
     const handleCancelSubscription = async () => {
         const functions = getFunctions();
         const cancelStripeSubscription = httpsCallable(functions, 'cancelStripeSubscription');
-
+        setIsLoading(true);
         cancelStripeSubscription().then(() => {
             alert('Your subscription will be canceled at the end of the current billing period.');
+            setIsLoading(false);
         }).catch(error => {
             console.error('Error canceling subscription:', error);
             alert('Failed to cancel subscription. Please try again.');
@@ -76,7 +79,7 @@ function User() {
         <div className="user-container">
             <FontAwesomeIcon icon={faUser} className="user-icon2" />
             {isLoading ? (
-                <p>Loading...</p>
+                <RouletteLoader />
             ) : error ? (
                 <p className="error">{error}</p>
             ) : (
