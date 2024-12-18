@@ -10,9 +10,10 @@ const HandInsights = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
-  const [selectedHandActions, setSelectedHandActions] = useState([]); // Store the actions of the clicked hand
+  const [selectedHandActions, setSelectedHandActions] = useState([]);
   const [players, setPlayers] = useState([]);
   const [sessionName, setSessionName] = useState('');
+  const [winners, setWinners] = useState([]);
   const navigate = useNavigate();
   const { sessionId } = useParams();
 
@@ -26,30 +27,49 @@ const HandInsights = () => {
       const getHandsByGameId = httpsCallable(functions, 'getHandsByGameId');
       const result = await getHandsByGameId({ gameId: sessionId });
       console.log(result);
-
+  
       const handDataFromApi = result?.data?.hands || [];
       if (handDataFromApi.length === 0) {
         console.warn('No hand data available for this session.');
       }
+  
+      const allWinners = [...new Set(handDataFromApi.flatMap(hand => hand?.winners || []))];
+  
+      const getCardHtml = (cards) => {
+        return cards
+          .map((card) => {
+            const value = card.slice(0, -1);
+            const suit = card.slice(-1);
+            const color = suit === '♥' || suit === '♦' ? 'red' : 'black';
+            return `<span style="color: black; font-size: 17px;">
+                      ${value}<span style="color: ${color}; font-size: 20px">${suit}</span>
+                    </span>`;
+          })
+          .join('<span style="margin-left: -40px;"></span>');
+      };
+      
 
       const mappedHandData = handDataFromApi.map(hand => ({
         handNumber: hand?.number || 0,
-        yourHand: hand?.cards || 'N/A',
+        yourHand: Array.isArray(hand?.cards) ? getCardHtml(hand.cards) : 'N/A',
         totalPot: hand?.pot || 0,
-        winner: hand?.winners || 'N/A',
+        winner: Array.isArray(hand?.winners) ? hand?.winners : ['N/A'],
         yourNet: hand?.yourNet || 0,
         players: hand?.players || [],
-        actions: hand?.actions || [],  // Store the actions of each hand
+        actions: hand?.actions || [],
       }));
-
+      
+      
       const sortedHandData = mappedHandData.sort((a, b) => a.handNumber - b.handNumber);
       setHandData(sortedHandData);
       setFilteredHandData(sortedHandData);
+      setWinners(allWinners);
       setSessionName(sessionId);
     } catch (error) {
       console.error('Error fetching Hand data:', error);
     }
   };
+  
 
   const sortData = (key) => {
     let direction = 'ascending';
@@ -74,13 +94,26 @@ const HandInsights = () => {
   const handleRowClick = (handNumber) => {
     const clickedHand = handData.find(hand => hand.handNumber === handNumber);
     if (clickedHand) {
-      setSelectedHandActions(clickedHand.actions); // Set the clicked hand's actions
-      setIsHandModalOpen(true);  // Open the modal
+      setSelectedHandActions(clickedHand.actions);
+      setIsHandModalOpen(true);
     }
   };
 
   const closeHandModal = () => {
     setIsHandModalOpen(false);
+  };
+
+  const openPlayerModal = () => {
+    setIsPlayerModalOpen(true);
+  };
+
+  const closePlayerModal = () => {
+    setIsPlayerModalOpen(false);
+  };
+
+  const filterByWinner = (winner) => {
+    setFilteredHandData(winner === 'All' ? handData : handData.filter(hand => hand.winner.includes(winner)));
+    closePlayerModal();
   };
 
   return (
@@ -95,7 +128,7 @@ const HandInsights = () => {
               <th onClick={() => sortData('handNumber')} style={{ cursor: 'pointer' }}>Hand Number</th>
               <th>Your Hand</th>
               <th onClick={() => sortData('totalPot')} style={{ cursor: 'pointer' }}>Total Pot ↕️</th>
-              <th onClick={() => sortData('winner')} style={{ cursor: 'pointer' }}>Winner</th>
+              <th onClick={openPlayerModal} style={{ cursor: 'pointer' }}>Winner</th> {/* Open winner modal */}
               <th onClick={() => sortData('yourNet')} style={{ cursor: 'pointer' }}>Your Net ↕️</th>
             </tr>
           </thead>
@@ -103,24 +136,45 @@ const HandInsights = () => {
             {filteredHandData.map((hand) => (
               <tr key={hand.handNumber} onClick={() => handleRowClick(hand.handNumber)} style={{ cursor: 'pointer' }}>
                 <td>{hand.handNumber}</td>
-                <td>{hand.yourHand}</td>
+                <td dangerouslySetInnerHTML={{ __html: hand.yourHand }}></td>
                 <td>{hand.totalPot}</td>
                 <td>{hand.winner.join(', ')}</td>
-                <td className={hand.yourNet >= 0 ? 'positive' : 'negative'}>{hand.yourNet}</td>
+                <td style={{ color: hand.yourNet >= 0 ? 'green' : 'red' }} className={hand.yourNet >= 0 ? 'positive' : 'negative'}>{hand.yourNet}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* Modal for selecting winners */}
+      {isPlayerModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Select a Winner</h2>
+
+            {/* All button centered */}
+            <div className="all-button" onClick={() => filterByWinner('All')}>All</div>
+
+            {/* Winner grid */}
+            <div className="winner-grid">
+              {winners.map((winner, index) => (
+                <div key={index} className="winner-item" onClick={() => filterByWinner(winner)}>
+                  {winner}
+                </div>
+              ))}
+            </div>
+            <button onClick={closePlayerModal} className="submit-button">Close</button>
+          </div>
+        </div>
+      )}
+
       {/* Modal for displaying hand actions */}
       {isHandModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2>Hand Actions</h2>
-            {/* Display player stacks */}
             <p className="player-stacks">
-              Events {selectedHandActions[0]?.players?.join(' | ')}
+              Player Stacks: {selectedHandActions[0]?.players?.join(' | ')}
             </p>
             <ol className="action-list">
               {selectedHandActions.map((action, index) => (
