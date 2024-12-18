@@ -103,6 +103,12 @@ const HandInsights = () => {
     setIsHandModalOpen(false);
   };
 
+  const handleOutsideClick = (event) => {
+    if (event.target.classList.contains('modal-overlay')) {
+      closeHandModal();
+    }
+  };
+
   const openPlayerModal = () => {
     setIsPlayerModalOpen(true);
   };
@@ -170,7 +176,7 @@ const HandInsights = () => {
 
       {/* Modal for displaying hand actions */}
       {isHandModalOpen && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={handleOutsideClick}>
           <div className="modal-content">
             <h2>Hand Actions</h2>
             <p className="player-stacks">
