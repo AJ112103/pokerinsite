@@ -35,8 +35,11 @@ const HandInsights = () => {
       const getCardHtml = (cards) => {
         return cards
           .map((card) => {
-            const value = card.slice(0, -1);
+            let value = card.slice(0, -1);
             const suit = card.slice(-1);
+            if (value === '0') {
+              value = '10';
+            }
             const color = suit === '♥' || suit === '♦' ? 'red' : 'black';
             return `<span style="color: black; font-size: 17px;">
                       ${value}<span style="color: ${color}; font-size: 20px">${suit}</span>
