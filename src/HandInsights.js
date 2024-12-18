@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './HandInsights.css';
-import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
@@ -11,10 +10,8 @@ const HandInsights = () => {
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [selectedHandActions, setSelectedHandActions] = useState([]);
-  const [players, setPlayers] = useState([]);
   const [sessionName, setSessionName] = useState('');
   const [winners, setWinners] = useState([]);
-  const navigate = useNavigate();
   const { sessionId } = useParams();
 
   useEffect(() => {
