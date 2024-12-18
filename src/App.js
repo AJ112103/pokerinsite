@@ -1,8 +1,11 @@
+// app.js
+
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import Navbar from './Navbar';
+import Footer from './Footer'; // Import the Footer component
 import Home from './Home';
 import About from './About';
 import Login from './Login';
@@ -31,7 +34,6 @@ function App() {
       }
     });
 
-    // Clean up the subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -110,6 +112,8 @@ function App() {
         />
 
       </Routes>
+
+      {location.pathname !== '/' && <Footer />} {/* Render Footer where Navbar is rendered */}
     </>
   );
 }
@@ -123,4 +127,3 @@ function AppWrapper() {
 }
 
 export default AppWrapper;
-

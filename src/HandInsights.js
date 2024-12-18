@@ -38,7 +38,7 @@ const HandInsights = () => {
             const value = card.slice(0, -1);
             const suit = card.slice(-1);
             const color = suit === '♥' || suit === '♦' ? 'red' : 'black';
-            return `<span style="color: black; font-size: 17px;">
+            return `<span style="color: black; font-size: 16px;">
                       ${value}<span style="color: ${color}; font-size: 20px">${suit}</span>
                     </span>`;
           })
