@@ -13,7 +13,7 @@ const HandInsights = () => {
   const [selectedHandActions, setSelectedHandActions] = useState([]);
   const [players, setPlayers] = useState([]);
   const [sessionName, setSessionName] = useState('');
-  const [winners, setWinners] = useState([]);  // Store all unique winners
+  const [winners, setWinners] = useState([]);
   const navigate = useNavigate();
   const { sessionId } = useParams();
 
@@ -27,33 +27,49 @@ const HandInsights = () => {
       const getHandsByGameId = httpsCallable(functions, 'getHandsByGameId');
       const result = await getHandsByGameId({ gameId: sessionId });
       console.log(result);
-
+  
       const handDataFromApi = result?.data?.hands || [];
       if (handDataFromApi.length === 0) {
         console.warn('No hand data available for this session.');
       }
-
+  
       const allWinners = [...new Set(handDataFromApi.flatMap(hand => hand?.winners || []))];
+  
+      const getCardHtml = (cards) => {
+        return cards
+          .map((card) => {
+            const value = card.slice(0, -1);
+            const suit = card.slice(-1);
+            const color = suit === '♥' || suit === '♦' ? 'red' : 'black';
+            return `<span style="color: black; font-size: 17px;">
+                      ${value}<span style="color: ${color}; font-size: 20px">${suit}</span>
+                    </span>`;
+          })
+          .join('<span style="margin-left: -40px;"></span>');
+      };
+      
 
       const mappedHandData = handDataFromApi.map(hand => ({
         handNumber: hand?.number || 0,
-        yourHand: Array.isArray(hand?.cards) ? hand.cards.join(',') : 'N/A',
+        yourHand: Array.isArray(hand?.cards) ? getCardHtml(hand.cards) : 'N/A',
         totalPot: hand?.pot || 0,
-        winner: Array.isArray(hand?.winners) ? hand?.winners : ['N/A'],  // Ensure winner is always an array
+        winner: Array.isArray(hand?.winners) ? hand?.winners : ['N/A'],
         yourNet: hand?.yourNet || 0,
         players: hand?.players || [],
         actions: hand?.actions || [],
       }));
       
+      
       const sortedHandData = mappedHandData.sort((a, b) => a.handNumber - b.handNumber);
       setHandData(sortedHandData);
       setFilteredHandData(sortedHandData);
-      setWinners(allWinners);  // Set the unique winners
+      setWinners(allWinners);
       setSessionName(sessionId);
     } catch (error) {
       console.error('Error fetching Hand data:', error);
     }
   };
+  
 
   const sortData = (key) => {
     let direction = 'ascending';
@@ -120,10 +136,10 @@ const HandInsights = () => {
             {filteredHandData.map((hand) => (
               <tr key={hand.handNumber} onClick={() => handleRowClick(hand.handNumber)} style={{ cursor: 'pointer' }}>
                 <td>{hand.handNumber}</td>
-                <td>{hand.yourHand}</td>
+                <td dangerouslySetInnerHTML={{ __html: hand.yourHand }}></td>
                 <td>{hand.totalPot}</td>
                 <td>{hand.winner.join(', ')}</td>
-                <td className={hand.yourNet >= 0 ? 'positive' : 'negative'}>{hand.yourNet}</td>
+                <td style={{ color: hand.yourNet >= 0 ? 'green' : 'red' }} className={hand.yourNet >= 0 ? 'positive' : 'negative'}>{hand.yourNet}</td>
               </tr>
             ))}
           </tbody>
