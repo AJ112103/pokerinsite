@@ -359,6 +359,8 @@ exports.deleteBankrollEntryAndUpdateScore = functions.https.onCall(async (data, 
     }
 });
 
+const lambdaUrl = functions.config().lambda.url;
+
 exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
@@ -378,7 +380,7 @@ exports.storeHardcodedData = functions.https.onCall(async (data, context) => {
     // Call the Lambda function with the link and selectedPlayers
     let resultData;
     try {
-        const response = await axios.post('https://fssn6tejrwpxyggox6vtdo4wca0fvmyv.lambda-url.us-west-1.on.aws/', {
+        const response = await axios.post(lambdaUrl, {
             link: link,
             names: selectedPlayers
         });
@@ -481,6 +483,14 @@ exports.getHandsByGameId = functions.https.onCall(async (data, context) => {
     const gameRef = admin.firestore().collection('userData').doc(userId).collection('games').doc(data.gameId);
 
     try {
+        const gameDoc = await gameRef.get();
+
+        if (!gameDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'Game not found.');
+        }
+
+        const sessionName = gameDoc.data().sessionName;
+
         const handsSnapshot = await gameRef.collection('hands').get();
 
         if (handsSnapshot.empty) {
@@ -492,7 +502,7 @@ exports.getHandsByGameId = functions.https.onCall(async (data, context) => {
             ...doc.data()
         }));
 
-        return { success: true, hands: handsDetails };
+        return { success: true, sessionName: sessionName || null, hands: handsDetails };
     } catch (error) {
         console.error('Error fetching hands:', error);
         throw new functions.https.HttpsError('unknown', 'An error occurred while fetching hands.');
