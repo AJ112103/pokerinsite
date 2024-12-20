@@ -179,9 +179,6 @@ const HandInsights = () => {
         <div className="modal-overlay" onClick={handleOutsideClick}>
           <div className="modal-content">
             <h2>Hand Actions</h2>
-            <p className="player-stacks">
-              Player Stacks: {selectedHandActions[0]?.players?.join(' | ')}
-            </p>
             <ol className="action-list">
               {selectedHandActions.map((action, index) => (
                 <li key={index} className="action-item">{action}</li>
