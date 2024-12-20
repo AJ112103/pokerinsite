@@ -8,10 +8,11 @@
   border-radius: 10px;
   background-color: #fff;
   position: relative;
+  height: 600px;
 }
 
 .hand-insights-table-wrapper {
-  max-height: 70vh; /* Make sure the table doesn't exceed 70% of the viewport height */
+  max-height: 55vh; /* Make sure the table doesn't exceed 70% of the viewport height */
   overflow-y: auto; /* Enable vertical scrolling */
 }
 

@@ -48,7 +48,7 @@ function Login() {
                         name: user.displayName,
                         email: user.email,
                         createdAt: new Date(),
-                        uploads: 3,
+                        uploads: 10,
                         subscriptionTier: "Free",
                         stripeCustomerId: stripeCustomerId // Store the Stripe customer ID
                     });
