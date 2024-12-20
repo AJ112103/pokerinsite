@@ -9,6 +9,7 @@ function Navbar() {
     <div className="navbar">
       <div className="logo">
         <Link to="/add-session">Pokerin.site</Link>
+        beta
       </div>
       <div className="nav-links">
         <Link to="/add-session" className="nav-item">Add Session</Link>
